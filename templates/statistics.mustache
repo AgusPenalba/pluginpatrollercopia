@@ -1,0 +1,231 @@
+{{!
+Estadísticas - plantilla dedicada para admin
+}}
+
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header bg-primary text-white rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-chart-pie"></i>
+                            Estadísticas
+                        </h1>
+                        <p class="mb-0 mt-1 opacity-75">Comparativa de contribuciones por grupo y alumnos</p>
+                    </div>
+                    <div class="text-right">
+                        <small class="d-block opacity-75">{{course_name}}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <!-- Card: Estadística global -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <strong class="mb-0">Estadística global</strong>
+                    <div>
+                        <label for="metricSelectorGlobal" class="sr-only">Métrica global</label>
+                        <select id="metricSelectorGlobal" class="form-control form-control-sm">
+                            <option value="commits" selected>Commits</option>
+                            <option value="lines">Líneas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div style="min-height:260px;"><canvas id="groupsBarChart"></canvas></div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div style="min-height:260px; display:flex; align-items:center; justify-content:center;"><canvas id="groupsPieChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Estadísticas por grupo -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <strong class="mb-0">Estadísticas por grupo</strong>
+                    <div>
+                        <label for="metricSelectorGroup" class="sr-only">Métrica grupo</label>
+                        <select id="metricSelectorGroup" class="form-control form-control-sm">
+                            <option value="commits" selected>Commits</option>
+                            <option value="lines">Líneas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label for="groupSelector">Seleccionar Grupo:</label>
+                            <select id="groupSelector" class="form-control">
+                                {{#group_options}}
+                                    <option value="{{value}}">{{text}}</option>
+                                {{/group_options}}
+                            </select>
+                        </div>
+                        
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div style="min-height:260px;"><canvas id="groupBarChart"></canvas></div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div style="min-height:260px; display:flex; align-items:center; justify-content:center;"><canvas id="groupPieChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js desde CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Global aggregated arrays (todos los estudiantes de todos los repos)
+        const groups_labels = {{#groups_labels_json}}{{{groups_labels_json}}}{{/groups_labels_json}}{{^groups_labels_json}}[]{{/groups_labels_json}};
+        const groups_commits = {{#groups_commits_json}}{{{groups_commits_json}}}{{/groups_commits_json}}{{^groups_commits_json}}[]{{/groups_commits_json}};
+        const groups_lines_added = {{#groups_lines_added_json}}{{{groups_lines_added_json}}}{{/groups_lines_added_json}}{{^groups_lines_added_json}}[]{{/groups_lines_added_json}};
+        const groups_lines_deleted = {{#groups_lines_deleted_json}}{{{groups_lines_deleted_json}}}{{/groups_lines_deleted_json}}{{^groups_lines_deleted_json}}[]{{/groups_lines_deleted_json}};
+        const groups_lines_modified = {{#groups_lines_modified_json}}{{{groups_lines_modified_json}}}{{/groups_lines_modified_json}}{{^groups_lines_modified_json}}[]{{/groups_lines_modified_json}};
+
+        // Map por repo con arrays específicos (labels, commits, lines_added, ...)
+        const groupChartMap = {{#group_chart_map_json}}{{{group_chart_map_json}}}{{/group_chart_map_json}}{{^group_chart_map_json}}{}{{/group_chart_map_json}};
+
+        function generatePalette(n) {
+            const predefined = ['#2ecc71','#e74c3c','#f1c40f','#3498db','#9b59b6','#e67e22','#1abc9c','#34495e','#8e44ad','#d35400','#16a085','#7f8c8d'];
+            if (n <= predefined.length) return predefined.slice(0, n);
+            const colors = [];
+            for (let i = 0; i < n; i++) {
+                const hue = Math.round((i * 360) / n);
+                colors.push(`hsl(${hue} 75% 45%)`);
+            }
+            return colors;
+        }
+
+        // Render aggregated groups charts
+        const ctxGroupsBar = document.getElementById('groupsBarChart').getContext('2d');
+        let groupsBar = new Chart(ctxGroupsBar, {
+            type: 'bar',
+            data: { labels: groups_labels, datasets: [{ label: 'Commits por grupo', data: groups_commits, backgroundColor: 'rgba(54, 162, 235, 0.6)' }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } }
+        });
+
+        const ctxGroupsPie = document.getElementById('groupsPieChart').getContext('2d');
+        let groupsPie = new Chart(ctxGroupsPie, {
+            type: 'pie',
+            data: { labels: groups_labels, datasets: [{ label: 'Commits por grupo', data: groups_commits, backgroundColor: generatePalette(groups_labels.length) }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Commits por grupo' }, legend: { labels: { font: { weight: 'bold' } } } } }
+        });
+
+        // Per-repo (group) charts
+        const groupSelector = document.getElementById('groupSelector');
+        function renderGroupCharts(key) {
+            const dataset = groupChartMap[key] || { labels: [], commits: [], lines_added: [], lines_deleted: [], lines_modified: [] };
+            const labelsG = dataset.labels || [];
+            const metricSelectorGroup = document.getElementById('metricSelectorGroup');
+            const currentMetric = metricSelectorGroup ? metricSelectorGroup.value : 'commits';
+
+            try { if (window.groupBar) window.groupBar.destroy(); } catch (e) {}
+            try { if (window.groupPie) window.groupPie.destroy(); } catch (e) {}
+
+            if (currentMetric === 'lines') {
+                // Bar chart para líneas
+                window.groupBar = new Chart(document.getElementById('groupBarChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: labelsG, datasets: [ { label: 'Líneas agregadas', data: dataset.lines_added || [], backgroundColor: 'rgba(40, 167, 69, 0.7)' }, { label: 'Líneas eliminadas', data: dataset.lines_deleted || [], backgroundColor: 'rgba(220, 53, 69, 0.7)' }, { label: 'Líneas modificadas', data: dataset.lines_modified || [], backgroundColor: 'rgba(255, 193, 7, 0.7)' } ] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } }
+                });
+                
+                // Pie chart para líneas (total de líneas)
+                const totalLines = (dataset.lines_added || []).map((added, i) => added + (dataset.lines_deleted?.[i] || 0) + (dataset.lines_modified?.[i] || 0));
+                window.groupPie = new Chart(document.getElementById('groupPieChart').getContext('2d'), {
+                    type: 'pie',
+                    data: { labels: labelsG, datasets: [{ label: 'Líneas agregadas', data: totalLines, backgroundColor: generatePalette(labelsG.length) }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Líneas agregadas' }, legend: { labels: { font: { weight: 'bold' } } } } }
+                });
+            } else {
+                // Bar chart para commits
+                window.groupBar = new Chart(document.getElementById('groupBarChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: labelsG, datasets: [{ label: 'Commits por alumno', data: dataset.commits || [], backgroundColor: 'rgba(54, 162, 235, 0.6)' }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } }
+                });
+
+                // Pie chart para commits
+                window.groupPie = new Chart(document.getElementById('groupPieChart').getContext('2d'), {
+                    type: 'pie',
+                    data: { labels: labelsG, datasets: [{ label: 'Commits', data: dataset.commits || [], backgroundColor: generatePalette(labelsG.length) }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Commits por alumno' }, legend: { labels: { font: { weight: 'bold' } } } } }
+                });
+            }
+        }
+
+        // Initialize default selection (first option)
+        try {
+            if (groupSelector && groupSelector.options.length > 0) {
+                groupSelector.selectedIndex = 0;
+                renderGroupCharts(groupSelector.options[0].value);
+                groupSelector.addEventListener('change', function(e){ renderGroupCharts(e.target.value); });
+            }
+        } catch (e) { /* ignore */ }
+
+        // Metric selectors: global and per-group
+        const metricSelectorGlobal = document.getElementById('metricSelectorGlobal');
+        const metricSelectorGroup = document.getElementById('metricSelectorGroup');
+
+        function updateGlobalMetric(metric) {
+            try { groupsBar.destroy(); } catch (e) {}
+            if (metric === 'lines') {
+                groupsBar = new Chart(ctxGroupsBar, { type: 'bar', data: { labels: groups_labels, datasets: [ { label: 'Líneas agregadas', data: groups_lines_added, backgroundColor: 'rgba(40, 167, 69, 0.7)' }, { label: 'Líneas eliminadas', data: groups_lines_deleted, backgroundColor: 'rgba(220, 53, 69, 0.7)' }, { label: 'Líneas modificadas', data: groups_lines_modified, backgroundColor: 'rgba(255, 193, 7, 0.7)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } } });
+                try { groupsPie.data.datasets[0].data = groups_lines_added; groupsPie.data.datasets[0].label = 'Líneas agregadas'; groupsPie.data.datasets[0].backgroundColor = generatePalette(groups_labels.length); groupsPie.options.plugins.title.text = 'Líneas agregadas'; groupsPie.update(); } catch (e) {}
+            } else {
+                groupsBar = new Chart(ctxGroupsBar, { type: 'bar', data: { labels: groups_labels, datasets: [ { label: 'Commits por grupo', data: groups_commits, backgroundColor: 'rgba(54, 162, 235, 0.6)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } } });
+                try { groupsPie.data.datasets[0].data = groups_commits; groupsPie.data.datasets[0].label = 'Commits por grupo'; groupsPie.data.datasets[0].backgroundColor = generatePalette(groups_labels.length); groupsPie.options.plugins.title.text = 'Commits por grupo'; groupsPie.update(); } catch (e) {}
+            }
+        }
+
+        function updateGroupMetric(metric) {
+            try {
+                const currentKey = groupSelector ? groupSelector.value : null;
+                if (!currentKey) return;
+                const ds = groupChartMap[currentKey] || {};
+                const labelsG = ds.labels || [];
+                try { if (window.groupBar) window.groupBar.destroy(); } catch (e) {}
+                try { if (window.groupPie) window.groupPie.destroy(); } catch (e) {}
+                
+                if (metric === 'lines') {
+                    window.groupBar = new Chart(document.getElementById('groupBarChart').getContext('2d'), { type: 'bar', data: { labels: labelsG, datasets: [ { label: 'Líneas agregadas', data: ds.lines_added || [], backgroundColor: 'rgba(40, 167, 69, 0.7)' }, { label: 'Líneas eliminadas', data: ds.lines_deleted || [], backgroundColor: 'rgba(220, 53, 69, 0.7)' }, { label: 'Líneas modificadas', data: ds.lines_modified || [], backgroundColor: 'rgba(255, 193, 7, 0.7)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } } });
+                    
+                    // Pie chart para líneas (total de líneas agregadas)
+                    const totalLines = (ds.lines_added || []).map((added, i) => added + (ds.lines_deleted?.[i] || 0) + (ds.lines_modified?.[i] || 0));
+                    window.groupPie = new Chart(document.getElementById('groupPieChart').getContext('2d'), { type: 'pie', data: { labels: labelsG, datasets: [{ label: 'Total líneas', data: totalLines, backgroundColor: generatePalette(labelsG.length) }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Total líneas' }, legend: { labels: { font: { weight: 'bold' } } } } } });
+                } else {
+                    window.groupBar = new Chart(document.getElementById('groupBarChart').getContext('2d'), { type: 'bar', data: { labels: labelsG, datasets: [ { label: 'Commits', data: ds.commits || [], backgroundColor: 'rgba(54, 162, 235, 0.6)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { labels: { font: { weight: 'bold' } } } } } });
+                    
+                    // Pie chart para commits
+                    window.groupPie = new Chart(document.getElementById('groupPieChart').getContext('2d'), { type: 'pie', data: { labels: labelsG, datasets: [{ label: 'Commits', data: ds.commits || [], backgroundColor: generatePalette(labelsG.length) }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Commits' }, legend: { labels: { font: { weight: 'bold' } } } } } });
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // Attach events
+        try {
+            if (metricSelectorGlobal) metricSelectorGlobal.addEventListener('change', function(e){ updateGlobalMetric(e.target.value); });
+            if (metricSelectorGroup) metricSelectorGroup.addEventListener('change', function(e){ updateGroupMetric(e.target.value); });
+        } catch (e) {}
+    } catch (e) { console.error('Error al renderizar estadísticas:', e); }
+});
+</script>

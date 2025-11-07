@@ -1,0 +1,38 @@
+{{!
+FILTROS PARA CONTRIBUTORS
+}}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter"></i>
+                    Filtros
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <form method="get" action="">
+                    <input type="hidden" name="id" value="{{cm_id}}">
+                    <input type="hidden" name="tab" value="tab3">
+                    
+                    <div class="row align-items-end">
+                        <div class="col-md-4">
+                            <label for="filterRepo" class="form-label small mb-1">Filtrar por Repositorio:</label>
+                            <select id="filterRepo" name="filterRepo" class="form-control form-control-sm" onchange="filterTable()">
+                                {{#repository_options}}
+                                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{text}}</option>
+                                {{/repository_options}}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                                <i class="fas fa-times"></i>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

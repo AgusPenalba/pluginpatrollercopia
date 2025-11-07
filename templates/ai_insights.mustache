@@ -1,0 +1,276 @@
+{{!
+    Template para interfaz de análisis de IA
+    Interfaz de dos columnas: estudiantes + resultados
+}}
+
+{{> mod_pluginpatroller/components/page_header }}
+
+{{! Información de demostración }}
+{{! Información de demostración eliminada }}
+
+{{! Mensajes de éxito/error }}
+{{> mod_pluginpatroller/components/alert_messages }}
+
+<div class="row">
+    {{! Columna izquierda: Selección de estudiantes }}
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Seleccionar Estudiante
+                </h5>
+            </div>
+            <div class="card-body">
+                {{! Filtros si están configurados }}
+                {{#filters_config}}
+                <div class="mb-3">
+                    <!-- Aquí irían los filtros si se necesitan -->
+                </div>
+                {{/filters_config}}
+                
+                {{#has_students}}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="{{table_id}}">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="fas fa-user"></i> Estudiante</th>
+                                <th><i class="fab fa-github"></i> Repositorio</th>
+                                <th><i class="fas fa-cogs"></i> Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#students}}
+                            <tr data-student-id="{{id}}" class="student-row">
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <strong>{{full_name}}</strong>
+                                        <small class="text-muted">{{github_username}}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{repository_name}}</span>
+                                </td>
+                                <td>
+                                    {{#can_analyze}}
+                                    <button class="btn btn-primary btn-sm analyze-btn" 
+                                            data-student-id="{{id}}" 
+                                            data-student-name="{{full_name}}">
+                                        <i class="fas fa-brain me-1"></i>Analizar
+                                    </button>
+                                    {{/can_analyze}}
+                                    {{^can_analyze}}
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Sin GitHub
+                                    </button>
+                                    {{/can_analyze}}
+                                </td>
+                            </tr>
+                            {{/students}}
+                        </tbody>
+                    </table>
+                </div>
+                {{/has_students}}
+                
+                {{^has_students}}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No hay estudiantes con repositorios configurados para análisis.
+                </div>
+                {{/has_students}}
+            </div>
+        </div>
+    </div>
+    
+    {{! Columna derecha: Resultados del análisis }}
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Resultado del Análisis IA
+                </h5>
+            </div>
+            <div class="card-body">
+                {{#has_analysis}}
+                {{#analysis_result}}
+                    {{! Header del análisis simplificado }}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <i class="fas fa-user-graduate me-2"></i>
+                            Análisis para {{student.name}}
+                        </h6>
+                    </div>
+                    
+                    {{! Información del repositorio }}
+                    <div class="card mb-4" style="background-color: #f8f9fa;">
+                        <div class="card-header">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Información del Repositorio
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-2">
+                                    <strong>Repositorio:</strong> {{repository.name}}
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-code-commit me-2 text-muted"></i>
+                                        <span><strong>Último Commit Analizado:</strong></span>
+                                    </div>
+                                    <div class="ms-4 mt-1">
+                                        <em>"{{repository.last_commit}}"</em>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="fw-bold fs-4 text-primary">{{analysis.total_commits}}</div>
+                                    <small class="text-muted">Commits</small>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="fw-bold fs-4 text-success">+{{analysis.total_lines_added}}</div>
+                                    <small class="text-muted">Líneas agregadas</small>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="fw-bold fs-4 text-danger">-{{analysis.total_lines_deleted}}</div>
+                                    <small class="text-muted">Líneas eliminadas</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{! Descripción del análisis }}
+                    <div class="mb-4">
+                        <h6 class="text-info">
+                            <i class="fas fa-clipboard-list me-2"></i>
+                            Descripción del Desarrollo:
+                        </h6>
+                        <div class="alert alert-light border-start border-info border-4">
+                            <p class="mb-0">{{analysis.descripcion}}</p>
+                        </div>
+                    </div>
+                    
+                    {{! Sugerencias }}
+                    <div class="mb-4">
+                        <h6 class="text-warning">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Sugerencias para Mejorar:
+                        </h6>
+                        <ul class="list-unstyled ms-3">
+                            {{#analysis.sugerencias}}
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-right text-warning me-2"></i>{{.}}
+                            </li>
+                            {{/analysis.sugerencias}}
+                        </ul>
+                    </div>
+                    
+                    {{! Información técnica }}
+                    <div class="text-end mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-robot me-1"></i>
+                            {{analysis.ai_provider}} • {{analysis.analysis_date}}
+                        </small>
+                    </div>
+                {{/analysis_result}}
+                {{/has_analysis}}
+                
+                {{^has_analysis}}
+                <div class="text-center py-5">
+                    <i class="fas fa-brain text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                    <h5 class="text-muted mt-3">Selecciona un estudiante para análisis</h5>
+                    <p class="text-muted">
+                        Elige un estudiante de la tabla de la izquierda y haz clic en "Analizar" 
+                        para ver un análisis detallado de su progreso con IA.
+                    </p>
+                </div>
+                {{/has_analysis}}
+            </div>
+        </div>
+    </div>
+</div>
+
+{{! JavaScript para manejar la interfaz }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar clics en botones de análisis
+    document.querySelectorAll('.analyze-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const studentName = this.getAttribute('data-student-name');
+            
+            if (studentId) {
+                analyzeStudent(studentId, studentName, this);
+            }
+        });
+    });
+    
+    // Resaltar fila seleccionada
+    document.querySelectorAll('.student-row').forEach(row => {
+        row.addEventListener('click', function() {
+            document.querySelectorAll('.student-row').forEach(r => r.classList.remove('table-active'));
+            this.classList.add('table-active');
+        });
+    });
+});
+
+function analyzeStudent(studentId, studentName, button) {
+    // Mostrar estado de carga
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analizando...';
+    button.disabled = true;
+    
+    // Crear formulario oculto para envío
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+    
+    // Campos del formulario
+    const cmIdField = document.createElement('input');
+    cmIdField.type = 'hidden';
+    cmIdField.name = 'id';
+    cmIdField.value = '{{cm_id}}';
+    
+    const analyzeField = document.createElement('input');
+    analyzeField.type = 'hidden';
+    analyzeField.name = 'analyze_student';
+    analyzeField.value = studentId;
+    
+    form.appendChild(cmIdField);
+    form.appendChild(analyzeField);
+    document.body.appendChild(form);
+    
+    // Enviar formulario
+    form.submit();
+}
+</script>
+
+<style>
+.student-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.student-row:hover {
+    background-color: #f8f9fa;
+}
+
+.analyze-btn {
+    transition: all 0.2s;
+}
+
+.analyze-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.8em;
+}
+</style>

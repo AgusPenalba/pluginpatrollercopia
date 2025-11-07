@@ -1,0 +1,244 @@
+{{!
+🎓 VISTA DE ESTUDIANTE
+Ver compañeros de curso y gestionar repositorio asignado
+}}
+
+<!-- 🎨 ENCABEZADO DE PÁGINA -->
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header bg-primary text-white rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-users"></i>
+                            Compañeros de Curso
+                        </h1>
+                        <p class="mb-0 mt-1 opacity-75">Ver y gestionar información de tu grupo académico</p>
+                    </div>
+                    <div class="text-right">
+                        <small class="d-block opacity-75">{{course_name}}</small>
+                        {{#user_fullname}}
+                        <small class="d-block opacity-75">
+                            <i class="fas fa-user"></i> {{user_fullname}}
+                        </small>
+                        {{/user_fullname}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- MENSAJES DE ALERTA -->
+    {{#success_message}}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i>
+        <strong>¡Éxito!</strong> {{success_message}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {{/success_message}}
+
+    {{#error_message}}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Error:</strong> {{error_message}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {{/error_message}}
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Tu contexto académico:</strong> {{my_sede_curso}}
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔍 SECCIÓN FILTROS -->
+    {{#has_classmates}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i> Filtros de Búsqueda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {{#filters}}
+                        <div class="col-md-4 mb-2">
+                            <label for="{{id}}" class="form-label">{{label}}</label>
+                            {{#is_text}}
+                                <input type="text" 
+                                       id="{{id}}" 
+                                       class="form-control" 
+                                       placeholder="{{placeholder}}" />
+                            {{/is_text}}
+                            {{#is_select}}
+                                <select id="{{id}}" class="form-control" onchange="filterTable('classmatesTable')">
+                                    {{#options}}
+                                        <option value="{{value}}">{{label}}</option>
+                                    {{/options}}
+                                </select>
+                            {{/is_select}}
+                        </div>
+                        {{/filters}}
+                        <div class="col-md-4 mb-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters('classmatesTable')">
+                                <i class="fas fa-times"></i> Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small id="filterCounter" class="text-muted"></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/has_classmates}}
+
+    {{#has_classmates}}
+    <div class="row">
+        <div class="col-12">
+            <form method="post" action="" class="mb-4">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-table"></i> 
+                            Lista de compañeros
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0" id="classmatesTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            Sede y Curso
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-user"></i>
+                                            Nombre Completo
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fab fa-github"></i>
+                                            Usuario GitHub
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-code-branch"></i>
+                                            Repositorio/Grupo
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-tools"></i>
+                                            Acciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#classmates}}
+                                    <tr {{#is_current_user}}class="table-warning"{{/is_current_user}}>
+                                        <td>{{my_sede_curso}}</td>
+                                        <td>
+                                            {{#is_current_user}}
+                                                <strong>{{name}} (Tú)</strong>
+                                            {{/is_current_user}}
+                                            {{^is_current_user}}
+                                                {{name}}
+                                            {{/is_current_user}}
+                                        </td>
+                                        <td>
+                                            {{#can_edit}}
+                                                <input type="text" 
+                                                       name="github_username" 
+                                                       value="{{github_username}}" 
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Tu usuario GitHub"
+                                                       required>
+                                            {{/can_edit}}
+                                            {{^can_edit}}
+                                                <span class="badge badge-secondary">{{github_username}}</span>
+                                                {{#is_readonly}}
+                                                    <small class="text-muted d-block">
+                                                        <i class="fas fa-lock"></i> 
+                                                        Estado bloqueado
+                                                    </small>
+                                                {{/is_readonly}}
+                                            {{/can_edit}}
+                                        </td>
+                                        <td>
+                                            {{#can_edit}}
+                                                {{#has_available_repos}}
+                                                <select name="repositorio" class="form-control form-control-sm">
+                                                    {{#available_repositories}}
+                                                    <option value="{{value}}" {{#selected}}selected{{/selected}}>
+                                                        {{text}}
+                                                    </option>
+                                                    {{/available_repositories}}
+                                                </select>
+                                                {{/has_available_repos}}
+                                                {{^has_available_repos}}
+                                                    <span class="badge badge-warning">Sin repositorios disponibles</span>
+                                                {{/has_available_repos}}
+                                            {{/can_edit}}
+                                            {{^can_edit}}
+                                                <span class="badge badge-info">{{repository.name}}</span>
+                                            {{/can_edit}}
+                                        </td>
+                                        <td>
+                                            {{#can_edit}}
+                                                <input type="hidden" name="alumno_id" value="{{id}}">
+                                                <button type="submit" name="guardar_repositorio" value="1" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-save"></i>
+                                                    Guardar
+                                                </button>
+                                            {{/can_edit}}
+                                            {{^can_edit}}
+                                                <small class="text-muted">No editable</small>
+                                            {{/can_edit}}
+                                        </td>
+                                    </tr>
+                                    {{/classmates}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="id" value="{{cm_id}}">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+            </form>
+        </div>
+    </div>
+    {{/has_classmates}}
+
+    {{^has_classmates}}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>No hay compañeros registrados</strong>
+                <p class="mb-0 mt-2">
+                    No se encontraron otros estudiantes registrados en tu sede y curso. 
+                    Puede que aún no se hayan registrado en el sistema o que seas el único estudiante inscrito.
+                </p>
+            </div>
+        </div>
+    </div>
+    {{/has_classmates}}
+</div>
+
+<!-- Scripts de filtros -->
+<script type="text/javascript">
+{{{filters_script}}}
+</script>

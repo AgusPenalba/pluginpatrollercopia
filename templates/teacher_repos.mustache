@@ -1,0 +1,770 @@
+<?php
+{{!
+    filepath: c:\Users\usuario\Desktop\MoodleWindowsInstaller-latest\server\moodle\mod\pluginpatroller\templates\teacher_repos.mustache
+}}
+
+<div class="teacher-repos-container p-3">
+    {{#has_repos}}
+        <!-- Sección de nombre de usuario GitHub -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fa fa-github"></i> Usuario GitHub
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="" id="github-username-form">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="action" value="savegithubusername">
+                    <input type="hidden" id="current-username" value="{{github_username}}">
+                    
+                    <div class="form-group">
+                        <label for="github_username">Nombre de usuario GitHub:</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="github_username" 
+                                   name="github_username" 
+                                   value="{{github_username}}"
+                                   placeholder="Ej: usuario123"
+                                   pattern="[a-zA-Z0-9-]+"
+                                   title="Solo letras, números y guiones"
+                                   required>
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-save"></i> Guardar
+                                </button>
+                            </div>
+                        </div>
+                        {{#has_valid_username}}
+                        <small class="form-text text-success">
+                            <i class="fa fa-check-circle"></i> Usuario configurado correctamente
+                        </small>
+                        {{/has_valid_username}}
+                        {{^has_valid_username}}
+                        <small class="form-text text-warning">
+                            <i class="fa fa-exclamation-triangle"></i> Configura tu usuario de GitHub para poder asignar repositorios
+                        </small>
+                        {{/has_valid_username}}
+                        
+                        {{#has_my_repos}}
+                        <small class="form-text text-info mt-2">
+                            <i class="fa fa-info-circle"></i> 
+                            <strong>Atención:</strong> Si cambias tu usuario de GitHub, serás removido como colaborador 
+                            de todos tus repositorios asignados ({{my_repos_count}}).
+                        </small>
+                        {{/has_my_repos}}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{#has_my_repos}}
+        <!-- Tabla de Mis Repositorios -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fa fa-folder"></i> Mis Repositorios Asignados
+                </h5>
+                {{#has_valid_username}}
+                <form method="post" action="" style="display:inline;" id="sync-form">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="action" value="syncinvitations">
+                    <button type="submit" class="btn btn-light btn-sm" id="sync-button" title="Sincronizar estados con GitHub">
+                        <i class="fa fa-sync-alt"></i> Sincronizar Estados
+                    </button>
+                </form>
+                {{/has_valid_username}}
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="my-repos-table">
+                        <thead>
+                            <tr>
+                                <th>Repositorio</th>
+                                <th>Sede</th>
+                                <th>Curso</th>
+                                <th>Grupo</th>
+                                <th>Estado Invitación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#my_repos}}
+                            <tr>
+                                <td><strong>{{nombre}}</strong></td>
+                                <td>{{sede}}</td>
+                                <td>{{curso}}</td>
+                                <td>{{grupo}}</td>
+                                <td>
+                                    <span class="badge {{status_class}}">
+                                        {{{status_icon}}} {{status_text}}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{#can_unassign}}
+                                    <form method="post" action="" style="display:inline;" 
+                                          onsubmit="return confirm('¿Está seguro de desasignar este repositorio?\nEsto eliminará su acceso en GitHub.');">
+                                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                                        <input type="hidden" name="action" value="unassignrepo">
+                                        <input type="hidden" name="repo_id" value="{{id}}">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Desasignar repositorio">
+                                            <i class="fa fa-times"></i> Desasignar
+                                        </button>
+                                    </form>
+                                    {{/can_unassign}}
+                                    {{^can_unassign}}
+                                    <span class="text-muted">
+                                        <i class="fa fa-lock"></i> Sin acciones
+                                    </span>
+                                    {{/can_unassign}}
+                                </td>
+                            </tr>
+                            {{/my_repos}}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fa fa-info-circle"></i> 
+                    <strong>Nota:</strong> Después de asignar un repositorio, recibirás una invitación en GitHub que debes aceptar para tener acceso.
+                    Usa el botón "Sincronizar Estados" para actualizar el estado de tus invitaciones.
+                </div>
+            </div>
+        </div>
+        {{/has_my_repos}}
+        
+        {{^has_my_repos}}
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i> No tienes repositorios asignados aún. 
+            {{#has_valid_username}}
+            {{#has_unassigned_repos}}
+            Puedes asignar repositorios desde la sección de "Repositorios Disponibles" abajo.
+            {{/has_unassigned_repos}}
+            {{/has_valid_username}}
+        </div>
+        {{/has_my_repos}}
+
+        {{#has_unassigned_repos}}
+        <!-- Tabla de Repositorios Disponibles con Checkboxes -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fa fa-folder-open"></i> Repositorios Disponibles para Asignar
+                </h5>
+                <span class="badge badge-light" id="selection-counter">
+                    <i class="fa fa-check-square"></i> 0 seleccionados
+                </span>
+            </div>
+            <div class="card-body">
+                {{^has_valid_username}}
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle"></i> 
+                    Debes configurar tu nombre de usuario de GitHub antes de poder asignar repositorios.
+                </div>
+                {{/has_valid_username}}
+                
+                <form method="post" action="" id="bulk-assign-form">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="action" value="assignmultiplerepos">
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="unassigned-repos-table">
+                            <thead>
+                                <tr>
+                                    <th width="50">
+                                        {{#has_valid_username}}
+                                        <input type="checkbox" 
+                                               id="select-all-repos" 
+                                               title="Seleccionar/Deseleccionar todos"
+                                               class="repo-checkbox-control">
+                                        {{/has_valid_username}}
+                                    </th>
+                                    <th>Repositorio</th>
+                                    <th>Sede</th>
+                                    <th>Curso</th>
+                                    <th>Grupo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#unassigned_repos}}
+                                <tr>
+                                    <td>
+                                        {{#has_valid_username}}
+                                        <!-- CORREGIDO: Usar {{name}} sin corchetes y procesarlo en el controlador -->
+                                        <input type="checkbox" 
+                                               name="repo_ids" 
+                                               value="{{id}}"
+                                               class="repo-checkbox"
+                                               data-repo-name="{{nombre}}">
+                                        {{/has_valid_username}}
+                                        {{^has_valid_username}}
+                                        <input type="checkbox" disabled title="Configure su usuario GitHub primero">
+                                        {{/has_valid_username}}
+                                    </td>
+                                    <td><strong>{{nombre}}</strong></td>
+                                    <td>{{sede}}</td>
+                                    <td>{{curso}}</td>
+                                    <td>{{grupo}}</td>
+                                </tr>
+                                {{/unassigned_repos}}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {{#has_valid_username}}
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="alert alert-info mb-0 flex-grow-1 mr-3" style="max-width: 70%;">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Límite:</strong> Puedes asignar hasta <strong>10 repositorios</strong> por operación.
+                            Selecciona los repositorios que deseas asignar.
+                        </div>
+                        <button type="submit" 
+                                class="btn btn-success btn-lg" 
+                                id="bulk-assign-btn"
+                                disabled
+                                title="Selecciona al menos un repositorio">
+                            <i class="fa fa-plus-circle"></i> Asignar Repositorios Seleccionados
+                        </button>
+                    </div>
+                    {{/has_valid_username}}
+                </form>
+            </div>
+        </div>
+        {{/has_unassigned_repos}}
+
+        {{#has_other_teachers_repos}}
+        <!-- Tabla de Repositorios Asignados a Otros Profesores -->
+        <div class="card mb-3">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fa fa-users"></i> Repositorios Asignados a Otros Profesores
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="other-repos-table">
+                        <thead>
+                            <tr>
+                                <th>Repositorio</th>
+                                <th>Sede</th>
+                                <th>Curso</th>
+                                <th>Grupo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#other_teachers_repos}}
+                            <tr>
+                                <td><strong>{{nombre}}</strong></td>
+                                <td>{{sede}}</td>
+                                <td>{{curso}}</td>
+                                <td>{{grupo}}</td>
+                                <td>
+                                    <span class="badge {{status_class}}">
+                                        {{{status_icon}}} {{mensaje}}
+                                    </span>
+                                </td>
+                            </tr>
+                            {{/other_teachers_repos}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{/has_other_teachers_repos}}
+        
+    {{/has_repos}}
+    
+    {{^has_repos}}
+    <div class="alert alert-warning">
+        <i class="fa fa-exclamation-triangle"></i> No hay repositorios disponibles en este curso.
+    </div>
+    {{/has_repos}}
+</div>
+
+<!-- Modal de Confirmación de Cambio de Username -->
+<div class="modal fade" id="confirm-username-change-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fa fa-exclamation-triangle"></i> 
+                    Confirmación de Cambio de Usuario GitHub
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    <strong>¡Atención!</strong> Estás a punto de cambiar tu usuario de GitHub.
+                </div>
+                
+                <p><strong>Usuario actual:</strong> <code id="modal-current-username"></code></p>
+                <p><strong>Nuevo usuario:</strong> <code id="modal-new-username"></code></p>
+                
+                <hr>
+                
+                <h6 class="text-danger"><i class="fa fa-times-circle"></i> Consecuencias del cambio:</h6>
+                <ul class="text-danger">
+                    <li>Serás <strong>removido como colaborador</strong> de todos tus repositorios asignados en GitHub</li>
+                    <li>Perderás el acceso inmediato a <strong><span id="modal-repos-count">0</span> repositorio(s)</strong></li>
+                    <li>Deberás <strong>reasignar manualmente</strong> los repositorios que necesites con el nuevo usuario</li>
+                    <li>Las invitaciones anteriores serán <strong>canceladas</strong></li>
+                </ul>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fa fa-info-circle"></i> 
+                    <strong>Nota:</strong> Si cambias el username por error, no podrás recuperar automáticamente tus asignaciones anteriores.
+                </div>
+                
+                <p class="mt-3"><strong>¿Estás seguro de que deseas continuar?</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" id="confirm-change-btn">
+                    <i class="fa fa-check"></i> Sí, cambiar usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.teacher-repos-container .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+.table tbody tr {
+    transition: background-color 0.2s;
+}
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+#sync-button {
+    transition: all 0.3s ease;
+}
+#sync-button:hover {
+    transform: scale(1.05);
+}
+#sync-button.syncing {
+    pointer-events: none;
+    opacity: 0.7;
+}
+#sync-button.syncing i {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Estilos del modal */
+.modal-content {
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.modal-header.bg-warning {
+    border-bottom: 3px solid #f0ad4e;
+}
+#confirm-username-change-modal code {
+    padding: 2px 6px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 1.1em;
+}
+#confirm-username-change-modal .text-danger {
+    font-weight: 500;
+}
+#confirm-username-change-modal ul.text-danger li {
+    margin-bottom: 8px;
+}
+
+/* Estilos para checkboxes */
+.repo-checkbox, .repo-checkbox-control {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+.repo-checkbox:disabled {
+    cursor: not-allowed;
+}
+#unassigned-repos-table tbody tr {
+    cursor: pointer;
+}
+#unassigned-repos-table tbody tr.selected {
+    background-color: #e3f2fd !important;
+}
+#selection-counter {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+#bulk-assign-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+</style>
+
+<script>
+(function() {
+    'use strict';
+
+    // ========================================
+    // CONSTANTES
+    // ========================================
+    const MAX_REPOS_PER_BATCH = 10;
+    
+    // Variable global para saber si el usuario tiene repos asignados
+    const HAS_MY_REPOS = {{#has_my_repos}}true{{/has_my_repos}}{{^has_my_repos}}false{{/has_my_repos}};
+    const MY_REPOS_COUNT = {{my_repos_count}};
+
+    // ========================================
+    // GESTIÓN DE CHECKBOXES MÚLTIPLES
+    // ========================================
+    
+    const repoCheckboxes = document.querySelectorAll('.repo-checkbox');
+    const selectAllCheckbox = document.getElementById('select-all-repos');
+    const bulkAssignBtn = document.getElementById('bulk-assign-btn');
+    const bulkAssignForm = document.getElementById('bulk-assign-form');
+    const selectionCounter = document.getElementById('selection-counter');
+
+    if (repoCheckboxes.length > 0) {
+        
+        // Función para actualizar el estado de la UI
+        function updateSelectionUI() {
+            const checkedBoxes = document.querySelectorAll('.repo-checkbox:checked');
+            const checkedCount = checkedBoxes.length;
+            
+            // Actualizar contador
+            if (selectionCounter) {
+                selectionCounter.innerHTML = `<i class="fa fa-check-square"></i> ${checkedCount} seleccionado${checkedCount !== 1 ? 's' : ''}`;
+            }
+            
+            // Actualizar botón de asignar
+            if (bulkAssignBtn) {
+                if (checkedCount > 0 && checkedCount <= MAX_REPOS_PER_BATCH) {
+                    bulkAssignBtn.disabled = false;
+                    bulkAssignBtn.title = `Asignar ${checkedCount} repositorio${checkedCount !== 1 ? 's' : ''}`;
+                } else if (checkedCount > MAX_REPOS_PER_BATCH) {
+                    bulkAssignBtn.disabled = true;
+                    bulkAssignBtn.title = `Máximo ${MAX_REPOS_PER_BATCH} repositorios por operación (tienes ${checkedCount} seleccionados)`;
+                } else {
+                    bulkAssignBtn.disabled = true;
+                    bulkAssignBtn.title = 'Selecciona al menos un repositorio';
+                }
+            }
+            
+            // Actualizar "select all"
+            if (selectAllCheckbox) {
+                const allChecked = repoCheckboxes.length === checkedCount;
+                const someChecked = checkedCount > 0 && checkedCount < repoCheckboxes.length;
+                
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = someChecked;
+            }
+            
+            // Marcar visualmente las filas seleccionadas
+            repoCheckboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                if (cb.checked) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            });
+        }
+        
+        // Event listener para cada checkbox individual
+        repoCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedCount = document.querySelectorAll('.repo-checkbox:checked').length;
+                
+                // Limitar a MAX_REPOS_PER_BATCH
+                if (checkedCount > MAX_REPOS_PER_BATCH) {
+                    this.checked = false;
+                    alert(`Máximo ${MAX_REPOS_PER_BATCH} repositorios por operación.\n\nAsigna estos primero y luego selecciona más.`);
+                    return;
+                }
+                
+                updateSelectionUI();
+            });
+            
+            // Click en la fila para toggle del checkbox
+            const row = checkbox.closest('tr');
+            row.addEventListener('click', function(e) {
+                // Evitar toggle si se clickeó el checkbox mismo
+                if (e.target !== checkbox) {
+                    checkbox.click();
+                }
+            });
+        });
+        
+        // Event listener para "select all"
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const shouldCheck = this.checked;
+                let checkedCount = 0;
+                
+                repoCheckboxes.forEach(cb => {
+                    if (shouldCheck && checkedCount < MAX_REPOS_PER_BATCH) {
+                        cb.checked = true;
+                        checkedCount++;
+                    } else if (!shouldCheck) {
+                        cb.checked = false;
+                    }
+                });
+                
+                if (shouldCheck && repoCheckboxes.length > MAX_REPOS_PER_BATCH) {
+                    alert(`Solo se han seleccionado los primeros ${MAX_REPOS_PER_BATCH} repositorios.\n\nMáximo ${MAX_REPOS_PER_BATCH} por operación.`);
+                }
+                
+                updateSelectionUI();
+            });
+        }
+        
+        // Submit del formulario de asignación múltiple
+        if (bulkAssignForm) {
+            bulkAssignForm.addEventListener('submit', function(e) {
+                const checkedBoxes = document.querySelectorAll('.repo-checkbox:checked');
+                
+                if (checkedBoxes.length === 0) {
+                    e.preventDefault();
+                    alert('Selecciona al menos un repositorio');
+                    return false;
+                }
+                
+                // NUEVO: Crear un campo oculto con todos los IDs
+                const idsArray = Array.from(checkedBoxes).map(cb => cb.value);
+                
+                // Opción A: Enviar como JSON
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = 'repo_ids_json';
+                hiddenField.value = JSON.stringify(idsArray);
+                this.appendChild(hiddenField);
+                
+
+
+                
+                const repoNames = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-repo-name'));
+                const repoList = repoNames.length <= 3 
+                    ? repoNames.join(', ') 
+                    : `${repoNames.slice(0, 3).join(', ')} y ${repoNames.length - 3} más`;
+                
+                const confirmed = confirm(
+                    `¿Asignar ${checkedBoxes.length} repositorio${checkedBoxes.length !== 1 ? 's' : ''}?\n\n` +
+                    `Repositorios:\n${repoList}\n\n` +
+                    `Se enviarán invitaciones a tu usuario de GitHub.`
+                );
+                
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Deshabilitar botón y mostrar loading
+                if (bulkAssignBtn) {
+                    bulkAssignBtn.disabled = true;
+                    bulkAssignBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Asignando repositorios...';
+                }
+                
+                // Deshabilitar checkboxes
+                repoCheckboxes.forEach(cb => cb.disabled = true);
+                if (selectAllCheckbox) selectAllCheckbox.disabled = true;
+            });
+        }
+        
+        // Inicializar UI
+        updateSelectionUI();
+    }
+
+    // ========================================
+    // CONFIRMACIÓN DE CAMBIO DE USERNAME
+    // ========================================
+    
+    const usernameForm = document.getElementById('github-username-form');
+    if (usernameForm) {
+
+        
+        const usernameInput = document.getElementById('github_username');
+        const currentUsernameInput = document.getElementById('current-username');
+        const modalElement = document.getElementById('confirm-username-change-modal');
+        
+        // Validación en tiempo real
+        usernameInput.addEventListener('input', function() {
+            const value = this.value;
+            const isValid = /^[a-zA-Z0-9-]+$/.test(value);
+            
+            if (!isValid && value.length > 0) {
+                this.setCustomValidity('Solo se permiten letras, números y guiones');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+        
+        // Función auxiliar para mostrar modal
+        function showModal(element) {
+            if (typeof jQuery !== 'undefined') {
+                jQuery(element).modal('show');
+            } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = new bootstrap.Modal(element, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                modal.show();
+            } else {
+                console.error('✗ Bootstrap/jQuery no disponible');
+                return false;
+            }
+            return true;
+        }
+        
+        // Función auxiliar para ocultar modal
+        function hideModal(element) {
+            if (typeof jQuery !== 'undefined') {
+                jQuery(element).modal('hide');
+            } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = bootstrap.Modal.getInstance(element);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+        }
+        
+        // Interceptar submit
+        usernameForm.addEventListener('submit', function(e) {
+
+            
+            const currentUsername = currentUsernameInput.value.trim();
+            const newUsername = usernameInput.value.trim();
+            
+
+
+
+
+            
+            // Determinar si debe mostrar modal
+            const shouldShowModal = currentUsername && 
+                                   newUsername && 
+                                   currentUsername !== newUsername && 
+                                   HAS_MY_REPOS;
+            
+
+            
+            if (shouldShowModal) {
+
+                
+                // Prevenir submit
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Poblar datos del modal
+                document.getElementById('modal-current-username').textContent = currentUsername;
+                document.getElementById('modal-new-username').textContent = newUsername;
+                document.getElementById('modal-repos-count').textContent = MY_REPOS_COUNT;
+                
+                // Intentar mostrar modal
+                const modalShown = showModal(modalElement);
+                
+                if (!modalShown) {
+                    // Fallback con confirm nativo
+                    const confirmed = confirm(
+                        `ATENCIÓN: Cambio de Usuario GitHub\n\n` +
+                        `Usuario actual: ${currentUsername}\n` +
+                        `Nuevo usuario: ${newUsername}\n\n` +
+                        `¡IMPORTANTE!\n` +
+                        `- Serás removido como colaborador de ${MY_REPOS_COUNT} repositorio(s)\n` +
+                        `- Perderás el acceso inmediato\n` +
+                        `- Deberás reasignar manualmente los repositorios\n\n` +
+                        `¿Estás seguro de que deseas continuar?`
+                    );
+                    
+                    if (confirmed) {
+
+                        usernameForm.submit();
+                    } else {
+
+                    }
+                }
+                
+                return false;
+            }
+            
+            // Si no debe mostrar modal, permitir submit normal
+
+            return true;
+        });
+        
+        // Manejar confirmación del modal
+        const confirmBtn = document.getElementById('confirm-change-btn');
+        if (confirmBtn) {
+
+            
+            confirmBtn.addEventListener('click', function() {
+
+                
+                // Ocultar modal
+                hideModal(modalElement);
+                
+                // Enviar formulario después de cerrar modal
+                setTimeout(function() {
+
+                    usernameForm.submit();
+                }, 300);
+            });
+        } else {
+            console.error('✗ No se encontró el botón confirm-change-btn');
+        }
+        
+    } else {
+        console.error('✗ No se encontró el formulario github-username-form');
+    }
+    
+    // ========================================
+    // MANEJO DE FORMULARIOS EXISTENTES
+    // ========================================
+
+    const assignForms = document.querySelectorAll('form[action=""]');
+    assignForms.forEach(form => {
+        if (form.id === 'github-username-form' || 
+            form.id === 'sync-form' || 
+            form.id === 'bulk-assign-form') {
+            return;
+        }
+        
+        form.addEventListener('submit', function(e) {
+            const action = this.querySelector('input[name="action"]').value;
+            const button = this.querySelector('button[type="submit"]');
+            
+            if (action === 'unassignrepo') {
+                button.disabled = true;
+                button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
+            }
+        });
+    });
+
+    const syncForm = document.getElementById('sync-form');
+    if (syncForm) {
+        const syncButton = document.getElementById('sync-button');
+        
+        syncForm.addEventListener('submit', function(e) {
+            syncButton.disabled = true;
+            syncButton.classList.add('syncing');
+            syncButton.innerHTML = '<i class="fa fa-sync-alt"></i> Sincronizando...';
+        });
+    }
+
+
+
+
+})();
+</script>

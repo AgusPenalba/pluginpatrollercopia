@@ -1,0 +1,187 @@
+{{!
+👥 USUARIOS SIN REGISTRAR
+Lista de estudiantes matriculados pendientes de registro en GitPatroller
+}}
+
+<!-- 🎨 ENCABEZADO DE PÁGINA -->
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header bg-primary text-white rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-user-times"></i>
+                            Usuarios Sin Registrar
+                        </h1>
+                        <p class="mb-0 mt-1 opacity-75">Estudiantes matriculados pendientes de registro en GitPatroller</p>
+                    </div>
+                    <div class="text-right">
+                        <small class="d-block opacity-75">{{course_name}}</small>
+                        {{#user_fullname}}
+                        <small class="d-block opacity-75">
+                            <i class="fas fa-user"></i> {{user_fullname}}
+                        </small>
+                        {{/user_fullname}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+
+    <!-- 🔍 SECCIÓN FILTROS -->
+    {{#has_unregistered}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i> Filtros de Búsqueda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {{#filters}}
+                        <div class="col-md-3 mb-2">
+                            <label for="{{id}}" class="form-label">{{label}}</label>
+                            {{#is_text}}
+                                <input type="text" 
+                                       id="{{id}}" 
+                                       class="form-control" 
+                                       placeholder="{{placeholder}}" />
+                            {{/is_text}}
+                            {{#is_select}}
+                                <select id="{{id}}" class="form-control" onchange="filterTable('unregisteredTable')">
+                                    {{#options}}
+                                        <option value="{{value}}">{{label}}</option>
+                                    {{/options}}
+                                </select>
+                            {{/is_select}}
+                        </div>
+                        {{/filters}}
+                        <div class="col-md-3 mb-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters('unregisteredTable')">
+                                <i class="fas fa-times"></i> Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small id="filterCounter" class="text-muted"></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/has_unregistered}}
+
+    <!-- Tabla de usuarios sin registrar -->
+    {{#has_unregistered}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users"></i>
+                        {{total_unregistered}} estudiantes sin registrar
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0" id="unregisteredTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Sede
+                                    </th>
+                                    <th scope="col">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        Curso
+                                    </th>
+                                    <th scope="col">
+                                        <i class="fas fa-user"></i>
+                                        Usuario Aula Virtual
+                                    </th>
+                                    <th scope="col">
+                                        <i class="fas fa-id-card"></i>
+                                        Nombre Completo
+                                    </th>
+                                    <th scope="col">
+                                        <i class="fas fa-envelope"></i>
+                                        Correo Electrónico
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#unregistered_students}}
+                                <tr>
+                                    <td>
+                                        {{#sede}}
+                                            <span class="badge badge-primary">{{sede}}</span>
+                                        {{/sede}}
+                                        {{^sede}}
+                                            <span class="badge badge-secondary">Sin asignar</span>
+                                        {{/sede}}
+                                    </td>
+                                    <td>
+                                        {{#curso}}
+                                            <span class="badge badge-info">{{curso}}</span>
+                                        {{/curso}}
+                                        {{^curso}}
+                                            <span class="badge badge-secondary">Sin asignar</span>
+                                        {{/curso}}
+                                    </td>
+                                    <td>
+                                        <strong>{{username}}</strong>
+                                    </td>
+                                    <td>
+                                        {{fullname}}
+                                    </td>
+                                    <td>
+                                        <a href="mailto:{{email}}" class="text-decoration-none">
+                                            <i class="fas fa-envelope"></i>
+                                            {{email}}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {{/unregistered_students}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Estos estudiantes están matriculados pero aún no han accedido al sistema GitPatroller para registrar su información de GitHub.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/has_unregistered}}
+
+    {{^has_unregistered}}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <strong>¡Excelente!</strong>
+                <p class="mb-0 mt-2">
+                    Todos los estudiantes matriculados ya se han registrado en el sistema GitPatroller.
+                    No hay usuarios pendientes de registro.
+                </p>
+            </div>
+        </div>
+    </div>
+    {{/has_unregistered}}
+</div>
+
+<!-- Scripts de filtros -->
+<script type="text/javascript">
+{{{filters_script}}}
+</script>

@@ -1,0 +1,314 @@
+{{!
+🔍 VISTA CONTRIBUTORS & INSIGHTS
+Panel de seguimiento de commits y calificaciones para profesores
+}}
+
+<!-- 🎨 ENCABEZADO DE PÁGINA -->
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header bg-primary text-white rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            Seguimiento y Calificación
+                        </h1>
+                        <p class="mb-0 mt-1 opacity-75">Monitoreo de contribuciones y evaluación de estudiantes</p>
+                    </div>
+                    <div class="text-right">
+                        <small class="d-block opacity-75">{{course_name}}</small>
+                        {{#user_fullname}}
+                        <small class="d-block opacity-75">
+                            <i class="fas fa-user"></i> {{user_fullname}}
+                        </small>
+                        {{/user_fullname}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- 🔍 SECCIÓN FILTROS (SISTEMA NUEVO) -->
+    {{#filters_config}}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i> Filtros de Búsqueda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {{#filters}}
+                        <div class="col-md-3 mb-2">
+                            <label for="{{id}}" class="form-label">{{label}}</label>
+                            {{#is_text}}
+                                <input type="text" 
+                                       id="{{id}}" 
+                                       class="form-control form-control-sm" 
+                                       placeholder="{{placeholder}}" 
+                                       onkeyup="filterTable('dataTable')"
+                                       oninput="filterTable('dataTable')">
+                            {{/is_text}}
+                            {{#is_select}}
+                                <select id="{{id}}" class="form-control form-control-sm" onchange="filterTable('dataTable')">
+                                    {{#options}}
+                                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                                    {{/options}}
+                                </select>
+                            {{/is_select}}
+                        </div>
+                        {{/filters}}
+                        <div class="col-md-3 mb-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters('dataTable')">
+                                <i class="fas fa-times"></i> Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small id="filterCounter" class="text-muted"></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/filters_config}}
+    
+    <!-- FALLBACK: Sistema de filtros antiguo (temporal) -->
+    {{^filters_config}}
+    {{{filters_html}}}
+    {{/filters_config}}
+
+    <!--  TABLA DE ESTUDIANTES -->
+    {{#has_students}}
+    <div class="row">
+        <div class="col-12">
+            {{#can_update_commits}}
+            <form method="get" action="" class="mb-3">
+                <input type="hidden" name="id" value="{{cm_id}}">
+                <input type="hidden" name="tab" value="tab3">
+                <input type="hidden" name="update" value="1">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-cloud-download-alt"></i>
+                    Actualizar Datos de Commits
+                </button>
+            </form>
+            {{/can_update_commits}}
+            <form method="post" action="">
+                <input type="hidden" name="id" value="{{cm_id}}">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users"></i>
+                            Seguimiento de Contribuciones y Calificaciones
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0" id="dataTable">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="fas fa-code-branch"></i>
+                                            Repositorio
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fab fa-github"></i>
+                                            Usuario GitHub
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-user"></i>
+                                            Nombre Completo
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-clock"></i>
+                                            Último Commit
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-git-alt"></i>
+                                            Commits
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-plus"></i>
+                                            Líneas +
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-minus"></i>
+                                            Líneas -
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-edit"></i>
+                                            Modificadas
+                                        </th>
+                                        <th scope="col">
+                                            <i class="fas fa-star"></i>
+                                            Calificación
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#students}}
+                                    <tr>
+                                        <td>
+                                            {{#repository_url}}
+                                                <a href="{{repository_url}}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fab fa-github"></i>
+                                                    <span class="ml-1">{{repo_name}}</span>
+                                                </a>
+                                            {{/repository_url}}
+                                            {{^repository_url}}
+                                                {{repo_name}}
+                                            {{/repository_url}}
+                                        </td>
+                                        <td>{{github_username}}</td>
+                                        <td>{{full_name}}</td>
+                                        <td>{{last_commit_date}}</td>
+                                        <td>{{commit_count}}</td>
+                                        <td>{{lines_added}}</td>
+                                        <td>{{lines_deleted}}</td>
+                                        <td>{{lines_modified}}</td>
+                                        <td>
+                                            <span id="grade-display-{{student_id}}">
+                                                {{#grade_empty}}
+                                                    <span class="text-muted">Sin nota</span>
+                                                {{/grade_empty}}
+                                                {{^grade_empty}}
+                                                    <span>{{grade}}</span>
+                                                {{/grade_empty}}
+                                                <button type="button" class="btn btn-link btn-sm p-0 ml-2" onclick="showGradeInput({{student_id}}, '{{grade}}')">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                            </span>
+                                            <span id="grade-input-{{student_id}}" style="display:none;">
+                                                <input type="number" name="calificacion[{{student_id}}]" value="{{grade}}" min="0" max="10" class="form-control form-control-sm d-inline-block" style="width:70px;" />
+                                                <button type="button" class="btn btn-link btn-sm p-0 ml-2" onclick="hideGradeInput({{student_id}})">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {{/students}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Mueve este form afuera del form principal -->
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <button type="submit" name="guardarCalificaciones" class="btn btn-success" value="1">
+                                    <i class="fas fa-save"></i>
+                                    Guardar Calificaciones
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {{/has_students}}
+
+    {{^has_students}}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-users-slash fa-3x mb-3"></i>
+                <h4>No hay estudiantes con repositorios asignados</h4>
+                <p class="mb-0">
+                    Primero asigna repositorios a los estudiantes en la sección de 
+                    <strong>Gestión de Accesos</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    {{/has_students}}
+</div>
+
+<!-- 🔧 SCRIPTS ESPECÍFICOS -->
+<script>
+// ==================== SISTEMA DE FILTROS MODERNO ====================
+{{#filter_script}}
+{{{filter_script}}}
+{{/filter_script}}
+
+// ==================== FUNCIONES ESPECÍFICAS DE CALIFICACIONES ====================
+function showGradeInput(studentId, currentGrade) {
+    document.getElementById('grade-display-' + studentId).style.display = 'none';
+    document.getElementById('grade-input-' + studentId).style.display = '';
+    // Opcional: enfocar el input
+    setTimeout(function() {
+        var input = document.querySelector('#grade-input-' + studentId + ' input');
+        if (input) input.focus();
+    }, 100);
+}
+
+function hideGradeInput(studentId) {
+    document.getElementById('grade-display-' + studentId).style.display = '';
+    document.getElementById('grade-input-' + studentId).style.display = 'none';
+}
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', function() {
+
+    
+    // Configurar búsqueda en tiempo real para el campo nombre
+    const nameFilter = document.getElementById('filterName');
+    if (nameFilter) {
+        nameFilter.addEventListener('input', function() {
+            filterTable('dataTable');
+        });
+
+    }
+    
+    // Inicializar contador de filtros
+    updateFilterCount('dataTable');
+});
+
+// ==================== FUNCIONES DE COMPATIBILIDAD (FALLBACK) ====================
+{{^filter_script}}
+// Función de filtrado básico (fallback si no hay FilterHelper)
+function filterTable() {
+    const filterValue = document.getElementById('filterRepo')?.value || 'All';
+    const table = document.getElementById('dataTable');
+    if (!table) return;
+    
+    const rows = table.getElementsByTagName('tr');
+    let visibleCount = 0;
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const repoCell = row.getElementsByTagName('td')[0];
+        
+        if (repoCell) {
+            const repoText = repoCell.textContent.trim();
+            const shouldShow = filterValue === 'All' || repoText.includes(filterValue);
+            
+            if (shouldShow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+
+}
+
+function clearAllFilters() {
+    const filterRepo = document.getElementById('filterRepo');
+    if (filterRepo) {
+        filterRepo.value = 'All';
+        filterTable();
+    }
+}
+{{/filter_script}}
+</script>

@@ -1,0 +1,60 @@
+{{!
+🎨 COMPONENTE: Botones de acción comunes
+Estilos consistentes para todos los botones del plugin
+}}
+
+{{#primary_button}}
+<button type="{{primary_button.type}}" 
+        name="{{primary_button.name}}" 
+        value="{{primary_button.value}}"
+        class="btn btn-primary {{primary_button.extra_classes}}"
+        {{#primary_button.disabled}}disabled{{/primary_button.disabled}}
+        {{#primary_button.onclick}}onclick="{{primary_button.onclick}}"{{/primary_button.onclick}}>
+    {{#primary_button.icon}}
+    <i class="{{primary_button.icon}}"></i>
+    {{/primary_button.icon}}
+    {{primary_button.text}}
+</button>
+{{/primary_button}}
+
+{{#secondary_button}}
+<button type="{{secondary_button.type}}" 
+        name="{{secondary_button.name}}" 
+        value="{{secondary_button.value}}"
+        class="btn btn-secondary {{secondary_button.extra_classes}}"
+        {{#secondary_button.disabled}}disabled{{/secondary_button.disabled}}
+        {{#secondary_button.onclick}}onclick="{{secondary_button.onclick}}"{{/secondary_button.onclick}}>
+    {{#secondary_button.icon}}
+    <i class="{{secondary_button.icon}}"></i>
+    {{/secondary_button.icon}}
+    {{secondary_button.text}}
+</button>
+{{/secondary_button}}
+
+{{#success_button}}
+<button type="{{success_button.type}}" 
+        name="{{success_button.name}}" 
+        value="{{success_button.value}}"
+        class="btn btn-success {{success_button.extra_classes}}"
+        {{#success_button.disabled}}disabled{{/success_button.disabled}}
+        {{#success_button.onclick}}onclick="{{success_button.onclick}}"{{/success_button.onclick}}>
+    {{#success_button.icon}}
+    <i class="{{success_button.icon}}"></i>
+    {{/success_button.icon}}
+    {{success_button.text}}
+</button>
+{{/success_button}}
+
+{{#danger_button}}
+<button type="{{danger_button.type}}" 
+        name="{{danger_button.name}}" 
+        value="{{danger_button.value}}"
+        class="btn btn-danger {{danger_button.extra_classes}}"
+        {{#danger_button.disabled}}disabled{{/danger_button.disabled}}
+        {{#danger_button.onclick}}onclick="{{danger_button.onclick}}"{{/danger_button.onclick}}>
+    {{#danger_button.icon}}
+    <i class="{{danger_button.icon}}"></i>
+    {{/danger_button.icon}}
+    {{danger_button.text}}
+</button>
+{{/danger_button}}

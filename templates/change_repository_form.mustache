@@ -1,0 +1,130 @@
+{{> components/page_header }}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            
+            {{! Información del estudiante }}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i>
+                        Información del Estudiante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Estudiante:</strong> {{student_name}}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Repositorio Actual:</strong> 
+                            <span class="badge badge-secondary">{{current_repo}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{! Formulario de cambio }}
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exchange-alt"></i>
+                        Cambiar Repositorio
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{#has_repositories}}
+                    <form method="post" action="">
+                        <input type="hidden" name="change_repo_confirmed" value="1">
+                        <input type="hidden" name="student_id" value="{{student_id}}">
+                        <input type="hidden" name="id" value="{{cm_id}}">
+                        <input type="hidden" name="tab" value="tab2">
+
+                        <div class="form-group">
+                            <label for="new_repository_id" class="font-weight-bold">
+                                <i class="fas fa-code-branch"></i> 
+                                Seleccionar Nuevo Repositorio:
+                            </label>
+                            <select name="new_repository_id" id="new_repository_id" class="form-control" required>
+                                <option value="">-- Seleccionar Repositorio --</option>
+                                {{#repository_options}}
+                                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                                {{/repository_options}}
+                            </select>
+                        </div>
+
+                        <div class="alert alert-warning mt-3">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Importante:
+                            </h6>
+                            <ul class="mb-0">
+                                <li>El estudiante será reasignado al nuevo repositorio</li>
+                                <li><strong>El estado de invitación se rehabilitará a "pendiente"</strong></li>
+                                <li>Se podrá enviar una nueva invitación al nuevo grupo</li>
+                                <li>Es necesario enviar la invitación después del cambio</li>
+                            </ul>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-exchange-alt"></i> 
+                                Confirmar Cambio de Repositorio
+                            </button>
+                            <a href="?id={{cm_id}}&tab=tab2" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> 
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                    {{/has_repositories}}
+                    
+                    {{^has_repositories}}
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            No hay repositorios disponibles
+                        </h6>
+                        <p class="mb-0">No se encontraron repositorios para asignar a este estudiante.</p>
+                        <a href="?id={{cm_id}}&tab=tab2" class="btn btn-secondary mt-2">
+                            <i class="fas fa-arrow-left"></i> 
+                            Volver a Gestión de Accesos
+                        </a>
+                    </div>
+                    {{/has_repositories}}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+.btn {
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.btn-warning {
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.btn-warning:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
+    transition: all 0.2s ease;
+}
+</style>
