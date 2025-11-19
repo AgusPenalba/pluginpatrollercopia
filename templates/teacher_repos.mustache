@@ -9,7 +9,7 @@
         <div class="card mb-3">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="fa fa-github"></i> Usuario GitHub
+                    <i class="fa fa-github"></i> {{#str}}githubuser, mod_pluginpatroller{{/str}}
                 </h5>
             </div>
             <div class="card-body">
@@ -19,7 +19,7 @@
                     <input type="hidden" id="current-username" value="{{github_username}}">
                     
                     <div class="form-group">
-                        <label for="github_username">Nombre de usuario GitHub:</label>
+                        <label for="github_username">{{#str}}githubusername, mod_pluginpatroller{{/str}}</label>
                         <div class="input-group">
                             <input type="text" 
                                    class="form-control" 
@@ -32,26 +32,25 @@
                                    required>
                             <div class="input-group-append">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fa fa-save"></i> Guardar
+                                    <i class="fa fa-save"></i> {{#str}}save, mod_pluginpatroller{{/str}}
                                 </button>
                             </div>
                         </div>
                         {{#has_valid_username}}
                         <small class="form-text text-success">
-                            <i class="fa fa-check-circle"></i> Usuario configurado correctamente
+                            <i class="fa fa-check-circle"></i> {{#str}}userconfiguredcorrectly, mod_pluginpatroller{{/str}}
                         </small>
                         {{/has_valid_username}}
                         {{^has_valid_username}}
                         <small class="form-text text-warning">
-                            <i class="fa fa-exclamation-triangle"></i> Configura tu usuario de GitHub para poder asignar repositorios
+                            <i class="fa fa-exclamation-triangle"></i> {{#str}}configuregithubuser, mod_pluginpatroller{{/str}}
                         </small>
                         {{/has_valid_username}}
                         
                         {{#has_my_repos}}
                         <small class="form-text text-info mt-2">
                             <i class="fa fa-info-circle"></i> 
-                            <strong>Atención:</strong> Si cambias tu usuario de GitHub, serás removido como colaborador 
-                            de todos tus repositorios asignados ({{my_repos_count}}).
+                            <strong>{{#str}}attention, mod_pluginpatroller{{/str}}</strong> {{#str}}changeusernamewarning, mod_pluginpatroller{{/str}} ({{my_repos_count}}).
                         </small>
                         {{/has_my_repos}}
                     </div>
@@ -64,14 +63,14 @@
         <div class="card mb-3">
             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fa fa-folder"></i> Mis Repositorios Asignados
+                    <i class="fa fa-folder"></i> {{#str}}myassignedrepos, mod_pluginpatroller{{/str}}
                 </h5>
                 {{#has_valid_username}}
                 <form method="post" action="" style="display:inline;" id="sync-form">
                     <input type="hidden" name="sesskey" value="{{sesskey}}">
                     <input type="hidden" name="action" value="syncinvitations">
-                    <button type="submit" class="btn btn-light btn-sm" id="sync-button" title="Sincronizar estados con GitHub">
-                        <i class="fa fa-sync-alt"></i> Sincronizar Estados
+                    <button type="submit" class="btn btn-light btn-sm" id="sync-button" title="{{#str}}synchronizestatus, mod_pluginpatroller{{/str}}">
+                        <i class="fa fa-sync-alt"></i> {{#str}}synchronizestatus, mod_pluginpatroller{{/str}}
                     </button>
                 </form>
                 {{/has_valid_username}}
@@ -81,12 +80,12 @@
                     <table class="table table-striped table-hover" id="my-repos-table">
                         <thead>
                             <tr>
-                                <th>Repositorio</th>
-                                <th>Sede</th>
-                                <th>Curso</th>
-                                <th>Grupo</th>
-                                <th>Estado Invitación</th>
-                                <th>Acciones</th>
+                                <th>{{#str}}repository, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}sede, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}course, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}group, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}invitationstatus, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}actions, mod_pluginpatroller{{/str}}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,18 +103,18 @@
                                 <td>
                                     {{#can_unassign}}
                                     <form method="post" action="" style="display:inline;" 
-                                          onsubmit="return confirm('¿Está seguro de desasignar este repositorio?\nEsto eliminará su acceso en GitHub.');">
+                                          onsubmit="return confirm('{{#str}}confirmunassign, mod_pluginpatroller{{/str}}');">
                                         <input type="hidden" name="sesskey" value="{{sesskey}}">
                                         <input type="hidden" name="action" value="unassignrepo">
                                         <input type="hidden" name="repo_id" value="{{id}}">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Desasignar repositorio">
-                                            <i class="fa fa-times"></i> Desasignar
+                                        <button type="submit" class="btn btn-sm btn-danger" title="{{#str}}unassignrepo, mod_pluginpatroller{{/str}}">
+                                            <i class="fa fa-times"></i> {{#str}}unassign, mod_pluginpatroller{{/str}}
                                         </button>
                                     </form>
                                     {{/can_unassign}}
                                     {{^can_unassign}}
                                     <span class="text-muted">
-                                        <i class="fa fa-lock"></i> Sin acciones
+                                        <i class="fa fa-lock"></i> {{#str}}noactions, mod_pluginpatroller{{/str}}
                                     </span>
                                     {{/can_unassign}}
                                 </td>
@@ -127,8 +126,8 @@
                 
                 <div class="alert alert-info mt-3">
                     <i class="fa fa-info-circle"></i> 
-                    <strong>Nota:</strong> Después de asignar un repositorio, recibirás una invitación en GitHub que debes aceptar para tener acceso.
-                    Usa el botón "Sincronizar Estados" para actualizar el estado de tus invitaciones.
+                    <strong>{{#str}}note, mod_pluginpatroller{{/str}}</strong> {{#str}}invitationinfo, mod_pluginpatroller{{/str}}
+                    {{#str}}usesyncbutton, mod_pluginpatroller{{/str}}
                 </div>
             </div>
         </div>
@@ -136,31 +135,76 @@
         
         {{^has_my_repos}}
         <div class="alert alert-info">
-            <i class="fa fa-info-circle"></i> No tienes repositorios asignados aún. 
+            <i class="fa fa-info-circle"></i> {{#str}}noassignedrepos, mod_pluginpatroller{{/str}} 
             {{#has_valid_username}}
             {{#has_unassigned_repos}}
-            Puedes asignar repositorios desde la sección de "Repositorios Disponibles" abajo.
+            {{#str}}canassignfrom, mod_pluginpatroller{{/str}}
             {{/has_unassigned_repos}}
             {{/has_valid_username}}
         </div>
         {{/has_my_repos}}
 
         {{#has_unassigned_repos}}
+        {{! FILTROS PARA LA TABLA DE REPOSITORIOS DISPONIBLES }}
+        {{#filters_config}}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter"></i> Filtros de Búsqueda
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {{#filters}}
+                    <div class="col-md-3 mb-2">
+                        <label for="{{id}}" class="form-label">{{label}}</label>
+                        {{#is_text}}
+                            <input type="text" 
+                                   id="{{id}}" 
+                                   class="form-control form-control-sm" 
+                                   placeholder="{{placeholder}}" 
+                                   onkeyup="filterTable('{{table_id}}')"
+                                   oninput="filterTable('{{table_id}}')">
+                        {{/is_text}}
+                        {{#is_select}}
+                            <select id="{{id}}" class="form-control form-control-sm" onchange="filterTable('{{table_id}}')">
+                                {{#options}}
+                                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                                {{/options}}
+                            </select>
+                        {{/is_select}}
+                    </div>
+                    {{/filters}}
+                    <div class="col-md-3 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters('{{table_id}}')">
+                            <i class="fas fa-times"></i> Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <small id="filterCounter" class="text-muted"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/filters_config}}
+        
         <!-- Tabla de Repositorios Disponibles con Checkboxes -->
         <div class="card mb-3">
             <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fa fa-folder-open"></i> Repositorios Disponibles para Asignar
+                    <i class="fa fa-folder-open"></i> {{#str}}availablerepos, mod_pluginpatroller{{/str}}
                 </h5>
                 <span class="badge badge-light" id="selection-counter">
-                    <i class="fa fa-check-square"></i> 0 seleccionados
+                    <i class="fa fa-check-square"></i> 0 {{#str}}selected, mod_pluginpatroller{{/str}}
                 </span>
             </div>
             <div class="card-body">
                 {{^has_valid_username}}
                 <div class="alert alert-warning">
                     <i class="fa fa-exclamation-triangle"></i> 
-                    Debes configurar tu nombre de usuario de GitHub antes de poder asignar repositorios.
+                    {{#str}}mustconfiguregithub, mod_pluginpatroller{{/str}}
                 </div>
                 {{/has_valid_username}}
                 
@@ -169,26 +213,26 @@
                     <input type="hidden" name="action" value="assignmultiplerepos">
                     
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="unassigned-repos-table">
+                        <table class="table table-striped table-hover" id="{{table_id}}">
                             <thead>
                                 <tr>
                                     <th width="50">
                                         {{#has_valid_username}}
                                         <input type="checkbox" 
                                                id="select-all-repos" 
-                                               title="Seleccionar/Deseleccionar todos"
+                                               title="{{#str}}selectdeselectall, mod_pluginpatroller{{/str}}"
                                                class="repo-checkbox-control">
                                         {{/has_valid_username}}
                                     </th>
-                                    <th>Repositorio</th>
-                                    <th>Sede</th>
-                                    <th>Curso</th>
-                                    <th>Grupo</th>
+                                    <th>{{#str}}repository, mod_pluginpatroller{{/str}}</th>
+                                    <th>{{#str}}sede, mod_pluginpatroller{{/str}}</th>
+                                    <th>{{#str}}course, mod_pluginpatroller{{/str}}</th>
+                                    <th>{{#str}}group, mod_pluginpatroller{{/str}}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {{#unassigned_repos}}
-                                <tr>
+                                <tr data-sede="{{data_sede}}" data-curso="{{data_curso}}">
                                     <td>
                                         {{#has_valid_username}}
                                         <!-- CORREGIDO: Usar {{name}} sin corchetes y procesarlo en el controlador -->
@@ -199,7 +243,7 @@
                                                data-repo-name="{{nombre}}">
                                         {{/has_valid_username}}
                                         {{^has_valid_username}}
-                                        <input type="checkbox" disabled title="Configure su usuario GitHub primero">
+                                        <input type="checkbox" disabled title="{{#str}}configureuserfirst, mod_pluginpatroller{{/str}}">
                                         {{/has_valid_username}}
                                     </td>
                                     <td><strong>{{nombre}}</strong></td>
@@ -216,15 +260,15 @@
                     <div class="d-flex justify-content-between align-items-center mt-3">
                         <div class="alert alert-info mb-0 flex-grow-1 mr-3" style="max-width: 70%;">
                             <i class="fa fa-info-circle"></i>
-                            <strong>Límite:</strong> Puedes asignar hasta <strong>10 repositorios</strong> por operación.
-                            Selecciona los repositorios que deseas asignar.
+                            <strong>{{#str}}limit, mod_pluginpatroller{{/str}}</strong> {{#str}}upto10repos, mod_pluginpatroller{{/str}}
+                            {{#str}}selectrepostoassign, mod_pluginpatroller{{/str}}
                         </div>
                         <button type="submit" 
                                 class="btn btn-success btn-lg" 
                                 id="bulk-assign-btn"
                                 disabled
-                                title="Selecciona al menos un repositorio">
-                            <i class="fa fa-plus-circle"></i> Asignar Repositorios Seleccionados
+                                title="{{#str}}selectatleastone, mod_pluginpatroller{{/str}}">
+                            <i class="fa fa-plus-circle"></i> {{#str}}assignselectedrepos, mod_pluginpatroller{{/str}}
                         </button>
                     </div>
                     {{/has_valid_username}}
@@ -238,7 +282,7 @@
         <div class="card mb-3">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
-                    <i class="fa fa-users"></i> Repositorios Asignados a Otros Profesores
+                    <i class="fa fa-users"></i> {{#str}}reposassignedtoothers, mod_pluginpatroller{{/str}}
                 </h5>
             </div>
             <div class="card-body">
@@ -246,11 +290,11 @@
                     <table class="table table-striped table-hover" id="other-repos-table">
                         <thead>
                             <tr>
-                                <th>Repositorio</th>
-                                <th>Sede</th>
-                                <th>Curso</th>
-                                <th>Grupo</th>
-                                <th>Estado</th>
+                                <th>{{#str}}repository, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}sede, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}course, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}group, mod_pluginpatroller{{/str}}</th>
+                                <th>{{#str}}state, mod_pluginpatroller{{/str}}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -278,7 +322,7 @@
     
     {{^has_repos}}
     <div class="alert alert-warning">
-        <i class="fa fa-exclamation-triangle"></i> No hay repositorios disponibles en este curso.
+        <i class="fa fa-exclamation-triangle"></i> {{#str}}noreposavailable, mod_pluginpatroller{{/str}}
     </div>
     {{/has_repos}}
 </div>
@@ -322,7 +366,7 @@
                 <p class="mt-3"><strong>¿Estás seguro de que deseas continuar?</strong></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="cancel-change-btn">
                     <i class="fa fa-times"></i> Cancelar
                 </button>
                 <button type="button" class="btn btn-warning" id="confirm-change-btn">
@@ -436,9 +480,17 @@
     const bulkAssignBtn = document.getElementById('bulk-assign-btn');
     const bulkAssignForm = document.getElementById('bulk-assign-form');
     const selectionCounter = document.getElementById('selection-counter');
+    const cancelBtn = document.getElementById('cancel-change-btn');
+        
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            hideModal(modalElement);
+        });
+    } else {
+        console.error('✗ No se encontró el botón cancel-change-btn');
+    }
 
     if (repoCheckboxes.length > 0) {
-        
         // Función para actualizar el estado de la UI
         function updateSelectionUI() {
             const checkedBoxes = document.querySelectorAll('.repo-checkbox:checked');
@@ -530,7 +582,7 @@
                 updateSelectionUI();
             });
         }
-        
+
         // Submit del formulario de asignación múltiple
         if (bulkAssignForm) {
             bulkAssignForm.addEventListener('submit', function(e) {
@@ -541,8 +593,7 @@
                     alert('Selecciona al menos un repositorio');
                     return false;
                 }
-                
-                // NUEVO: Crear un campo oculto con todos los IDs
+                // Crear un campo oculto con todos los IDs
                 const idsArray = Array.from(checkedBoxes).map(cb => cb.value);
                 
                 // Opción A: Enviar como JSON
@@ -551,10 +602,7 @@
                 hiddenField.name = 'repo_ids_json';
                 hiddenField.value = JSON.stringify(idsArray);
                 this.appendChild(hiddenField);
-                
 
-
-                
                 const repoNames = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-repo-name'));
                 const repoList = repoNames.length <= 3 
                     ? repoNames.join(', ') 
@@ -582,18 +630,13 @@
                 if (selectAllCheckbox) selectAllCheckbox.disabled = true;
             });
         }
-        
         // Inicializar UI
         updateSelectionUI();
     }
-
-    // ========================================
-    // CONFIRMACIÓN DE CAMBIO DE USERNAME
-    // ========================================
     
+    // CONFIRMACIÓN DE CAMBIO DE USERNAME
     const usernameForm = document.getElementById('github-username-form');
     if (usernameForm) {
-
         
         const usernameInput = document.getElementById('github_username');
         const currentUsernameInput = document.getElementById('current-username');
@@ -641,28 +684,17 @@
         }
         
         // Interceptar submit
-        usernameForm.addEventListener('submit', function(e) {
-
-            
+        usernameForm.addEventListener('submit', function(e) {           
             const currentUsername = currentUsernameInput.value.trim();
             const newUsername = usernameInput.value.trim();
-            
 
-
-
-
-            
             // Determinar si debe mostrar modal
             const shouldShowModal = currentUsername && 
                                    newUsername && 
                                    currentUsername !== newUsername && 
                                    HAS_MY_REPOS;
-            
-
-            
+           
             if (shouldShowModal) {
-
-                
                 // Prevenir submit
                 e.preventDefault();
                 e.stopPropagation();
@@ -687,7 +719,6 @@
                         `- Deberás reasignar manualmente los repositorios\n\n` +
                         `¿Estás seguro de que deseas continuar?`
                     );
-                    
                     if (confirmed) {
 
                         usernameForm.submit();
@@ -695,12 +726,10 @@
 
                     }
                 }
-                
                 return false;
             }
             
             // Si no debe mostrar modal, permitir submit normal
-
             return true;
         });
         
@@ -768,3 +797,10 @@
 
 })();
 </script>
+
+{{! SCRIPT DE FILTROS }}
+{{#filter_script}}
+<script>
+{{{filter_script}}}
+</script>
+{{/filter_script}}

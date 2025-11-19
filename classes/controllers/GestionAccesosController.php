@@ -3,50 +3,35 @@ namespace mod_pluginpatroller\controllers;
 
 use mod_pluginpatroller\model\RepositoryModel;
 use mod_pluginpatroller\service\GitHubAccessService;
-use mod_pluginpatroller\service\StudentManagementService;
-use mod_pluginpatroller\service\TemplateDataService;
+use mod_pluginpatroller\service\student\StudentManagementService;
+use mod_pluginpatroller\service\view\TemplateDataService;
 use mod_pluginpatroller\helpers\ConfigHelper;
 use mod_pluginpatroller\helpers\FilterHelper;
 use mod_pluginpatroller\model\ghpatapi\GitHubPatrollerAPI;
 
 defined('MOODLE_INTERNAL') || die();
 
-/* Maneja invitaciones de GitHub, asignación de repositorios y estado de estudiantes */
 class GestionAccesosController extends AbstractController {
     
     private $gitHubAccessService;
     private $studentManagementService;
     private $templateDataService;
     
-    /*Orquesta todo el flujo de gestión de accesos usando servicios especializados*/
-        public function execute(): string {
-            $this->requireTeacherPermissions();
-            $this->initializeServices();
+    public function execute(): string {
+        $this->requireTeacherPermissions();
+        $this->initializeServices();
         
             try {
                 $success_message = '';
-
-                // Procesar acción de cambio de repositorio
-                $action = $this->getParam('action');
-                if ($action === 'show_change_repo_form') {
-                    return $this->showChangeRepositoryForm();
-                }
-
-                // Procesar cambio de repositorio confirmado
-                $change_repo_confirmed = $this->getParam('change_repo_confirmed');
-                if ($change_repo_confirmed) {
-                    $this->processRepositoryChange();
-                    $this->redirect($this->getPluginUrl(['tab' => 'tab2']), 'Repositorio cambiado exitosamente. Estado de invitación rehabilitado.', 2);
-                }
 
                 // Procesar test de API
                 $test_api = $this->getParam('test_api');
                 if ($test_api) {
                     try {
                         $test_result = $this->testGitHubAPI();
-                        $success_message = "🧪 TEST API RESULTADO:<br>" . $test_result;
+                        $success_message = "≡ƒº¬ TEST API RESULTADO:<br>" . $test_result;
                     } catch (\Exception $e) {
-                        $success_message = "❌ ERROR EN TEST API: " . $e->getMessage();
+                        $success_message = "Γ¥î ERROR EN TEST API: " . $e->getMessage();
                     }
                 }
             
@@ -59,13 +44,76 @@ class GestionAccesosController extends AbstractController {
                         $force_resend = $this->getParam('force_resend') ? true : false;
                         $result = $this->gitHubAccessService->processInvitations($repository_selected, $force_resend);
                         
+                        // Si es petición AJAX, devolver solo los datos actualizados
+                        if ($this->isAjaxRequest()) {
+                            $this->sendAjaxResponse([
+                                'success' => true,
+                                'message' => "Γ£à " . $result,
+                                'students_data' => $this->getUpdatedStudentsData()
+                            ]);
+                            return '';
+                        }
+                        
                         // REDIRIGIR para evitar reenvío automático al refrescar la página
-                        $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "✅ " . $result, 3);
+                        $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "" . $result, 3);
                         
                     } catch (\Exception $e) {
-                        $error_message = "❌ ERROR: " . $e->getMessage();
+                        if ($this->isAjaxRequest()) {
+                            $this->sendAjaxResponse([
+                                'success' => false,
+                                'message' => "ERROR: " . $e->getMessage()
+                            ]);
+                            return '';
+                        }
+                        
+                        $error_message = "ERROR: " . $e->getMessage();
                         $debug_info = $this->getDebugInfo($repository_selected);
-                        $success_message = "🔍 PROCESANDO REPOSITORIO: '$repository_selected'<br>" . $debug_info . "<br><br>" . $error_message;
+                        $success_message = "PROCESANDO REPOSITORIO: '$repository_selected'<br>" . $debug_info . "<br><br>" . $error_message;
+                    }
+                }
+
+                // Procesar sincronizaci├│n de invitaciones
+                $sync_invitations = $this->getParam('sync_invitations');
+                if ($sync_invitations) {
+                    require_sesskey();
+                    try {
+                        // Primero inicializar estados faltantes
+                        $init_result = $this->gitHubAccessService->initializeMissingStatuses($this->course->id);
+                        
+                        // Luego sincronizar con GitHub
+                        $sync_result = $this->gitHubAccessService->syncInvitationStatuses($this->course->id);
+                        
+                        $message = "Sincronización completada:<br>";
+                        $message .= "• Inicializados: {$init_result['initialized']} registros<br>";
+                        $message .= "• Actualizados: {$sync_result['updated']} estados<br>";
+                        $message .= "• Total procesados: {$sync_result['total']} estudiantes";
+                        
+                        if ($sync_result['errors'] > 0) {
+                            $message .= "<br>• Errores: {$sync_result['errors']}";
+                        }
+                        
+                        // Si es petición AJAX, devolver solo los datos actualizados
+                        if ($this->isAjaxRequest()) {
+                            error_log("DEBUG AJAX: Enviando respuesta de sincronización exitosa");
+                            $this->sendAjaxResponse([
+                                'success' => true,
+                                'message' => $message,
+                                'students_data' => $this->getUpdatedStudentsData()
+                            ]);
+                            return '';
+                        }
+                        
+                        $this->redirect($this->getPluginUrl(['tab' => 'tab2']), $message, 3);
+                        
+                    } catch (\Exception $e) {
+                        if ($this->isAjaxRequest()) {
+                            $this->sendAjaxResponse([
+                                'success' => false,
+                                'message' => "Error en sincronización: " . $e->getMessage()
+                            ]);
+                            return '';
+                        }
+                        $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "Error en sincronización: " . $e->getMessage(), 3);
                     }
                 }
 
@@ -73,7 +121,18 @@ class GestionAccesosController extends AbstractController {
                 $reset_invitations = $this->getParam('reset_invitations');
                 if ($reset_invitations) {
                     $this->resetInvitationStatuses();
-                    $this->redirect($this->getPluginUrl(['tab' => 'tab2']), 'Estados de invitación reseteados exitosamente.', 2);
+                    $this->redirect($this->getPluginUrl(['tab' => 'tab2']), get_string('invitationsreset', 'mod_pluginpatroller'), 2);
+                }
+
+                // Procesar cambio de repositorio (SOLO si es POST con change_repo_user_id)
+                $change_repo_user_id = $this->getParam('change_repo_user_id');
+                $new_repo_name = $this->getParam('new_repo_name');
+                
+                
+                if ($change_repo_user_id && $new_repo_name) {
+                    error_log("DEBUG CAMBIO REPO: Entrando a handleRepositoryChange");
+                    $this->handleRepositoryChange($change_repo_user_id);
+                    $this->redirect($this->getPluginUrl(['tab' => 'tab2']), 'Repositorio cambiado exitosamente. El estudiante puede recibir una nueva invitación.', 3);
                 }
 
                 // Procesar envío de invitación individual
@@ -82,12 +141,12 @@ class GestionAccesosController extends AbstractController {
                     try {
                         $result = $this->gitHubAccessService->sendSingleInvitation($send_single_invitation);
                         if ($result['success']) {
-                            $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "✅ " . $result['message'], 3);
+                            $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "" . $result['message'], 3);
                         } else {
-                            $success_message = "❌ " . $result['message'];
+                            $success_message = " " . $result['message'];
                         }
                     } catch (\Exception $e) {
-                        $success_message = "❌ Error al enviar invitación: " . $e->getMessage();
+                        $success_message = "Error al enviar invitación: " . $e->getMessage();
                     }
                 }
 
@@ -97,12 +156,13 @@ class GestionAccesosController extends AbstractController {
                     try {
                         $result = $this->gitHubAccessService->cancelInvitation($cancel_invitation);
                         if ($result['success']) {
-                            $success_message = "✅ " . $result['message'];
+                            // Redirigir para refrescar los datos y mostrar el nuevo estado
+                            $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "" . $result['message'], 3);
                         } else {
-                            $success_message = "❌ " . $result['message'];
+                            $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "" . $result['message'], 3);
                         }
                     } catch (\Exception $e) {
-                        $success_message = "❌ Error al cancelar invitación: " . $e->getMessage();
+                        $this->redirect($this->getPluginUrl(['tab' => 'tab2']), "Error al cancelar invitación: " . $e->getMessage(), 3);
                     }
                 }
 
@@ -110,7 +170,13 @@ class GestionAccesosController extends AbstractController {
                 $guardar_cambios = $this->getParam('guardar_cambios');
                 if ($guardar_cambios) {
                     $this->processSaveChanges();
-                    $this->redirect($this->getPluginUrl(['tab' => 'tab2']), 'Cambios guardados exitosamente.', 2);
+                    $this->redirect($this->getPluginUrl(['tab' => 'tab2']), get_string('changessaved', 'mod_pluginpatroller'), 2);
+                }
+
+                // Mensaje temporal si se está mostrando formulario de cambio
+                $change_repo_for = $this->getParam('change_repo_for');
+                if ($change_repo_for) {
+                    $success_message = "Seleccione el nuevo repositorio para el estudiante (ID: $change_repo_for)";
                 }
 
                 // Preparar todos los datos para el template
@@ -125,23 +191,27 @@ class GestionAccesosController extends AbstractController {
             }
         }
     
-        /*Inicializa servicios especializados*/
+        // Inicializa servicios especializados
         private function initializeServices(): void {
             $this->gitHubAccessService = new GitHubAccessService($this->course);
             $this->studentManagementService = new StudentManagementService($this->course);
             $this->templateDataService = new TemplateDataService($this->course, $this->cm);
         }
     
-        /*Procesa cambios usando el servicio especializado*/
-        private function processSaveChanges(): void {
+    // Procesa cambios usando el servicio especializado
+    private function processSaveChanges(): void {
             $github_changes = $_POST['github'] ?? [];
             $repo_changes = $_POST['repositorio'] ?? [];
         
             $this->gitHubAccessService->processSaveChanges($github_changes, $repo_changes);
-        }
+    }
     
-        /*Organiza toda la información para el template usando servicios*/
-        private function prepareTemplateData(string $success_message = ''): array {
+    // Organiza toda la informacion para el template usando servicios
+    private function prepareTemplateData(string $success_message = ''): array {
+            // Cargar JavaScript externo para gestion de accesos
+            global $PAGE;
+            $PAGE->requires->js('/mod/pluginpatroller/scripts/gestion-accesos.js');
+            
             // Configurar datos para filtros (SIN HTML)
             $filter_config = [
                 'show_name' => true,
@@ -149,155 +219,73 @@ class GestionAccesosController extends AbstractController {
                 'show_curso' => true,
                 'show_repo' => false
             ];
-            $filters_data = FilterHelper::getFiltersData($this->course->id, $filter_config);
-        
-            // Obtener repositorios disponibles
-            $repositories = RepositoryModel::getAllByCourseId($this->course->id);
-        
-            // Convertir formato [id => nombre] a [nombre => nombre] para el select
-            $repositories_for_select = [];
-            foreach ($repositories as $repo_id => $repo_name) {
-                $repositories_for_select[$repo_name] = $repo_name;
+
+            // Usar el servicio de templates para preparar filtros y header
+            $filters_data = $this->templateDataService->prepareFiltersConfig($filter_config);
+            $header_data = $this->templateDataService->preparePageHeader('fas fa-key', get_string('accessmanagement', 'mod_pluginpatroller'), get_string('manageinvitationsrepos', 'mod_pluginpatroller'));
+
+            // Obtener repositorios disponibles y formatear opciones (valor = nombre del repo para compatibilidad con processInvitations)
+            $raw_repos = RepositoryModel::getAllByCourseId($this->course->id);
+            $repository_options = [];
+            // Opci├│n "All"
+            $repository_options[] = [
+                'value' => 'All',
+                'text' => get_string('allrepositories', 'mod_pluginpatroller'),
+                'selected' => false
+            ];
+            foreach ($raw_repos as $id => $name) {
+                $repository_options[] = [
+                    'value' => $name,
+                    'text' => $name,
+                    'selected' => false
+                ];
             }
-        
-            $repository_options = array_merge(['All' => 'Todos los Repositorios'], $repositories_for_select);
-        
-            // Obtener estudiantes usando el servicio
+
+            // Obtener estudiantes usando el servicio (ya vienen formateados para la tabla)
             $students_data = $this->gitHubAccessService->getStudentsWithGitHubData($this->cm->id);
             $has_updatable_students = $this->gitHubAccessService->hasUpdatableStudents($students_data);
 
-            return [
-                // Header del template
-                'header_icon' => 'fas fa-key',
-                'header_title' => 'Gestión de Accesos GitHub',
-                'header_subtitle' => 'Invitaciones y permisos de repositorios',
+            // Detectar si se debe mostrar el formulario de cambio de repositorio
+            $change_repo_for = $this->getParam('change_repo_for');
             
-                // IDs necesarios para formularios
+            // Agregar datos de cambio de repo a cada estudiante
+            foreach ($students_data as &$student) {
+                $student['show_change_form'] = ($change_repo_for && (int)$change_repo_for === (int)$student['user_id']);
+                
+                // Para el formulario de cambio: filtrar solo repos con espacio disponible (excluyendo el actual)
+                if ($student['show_change_form']) {
+                    $current_repo_name = $student['repository_name'] ?? null;
+                    $student['available_repos'] = $this->getAvailableRepositoriesWithCapacity($raw_repos, $student['user_id'], $current_repo_name);
+                } else {
+                    $student['available_repos'] = $repository_options; // Todos los repos para filtros normales
+                }
+            }
+            unset($student); // Romper referencia
+
+            // Preparar variables esperadas por el template
+            $table_id = 'access_table_' . $this->cm->id;
+
+            // $filters_data viene con la forma ['filters' => [...], 'script_functions' => '...', 'table_id' => '...']
+            $filters_list = is_array($filters_data) && isset($filters_data['filters']) ? $filters_data['filters'] : [];
+            $filter_script = is_array($filters_data) && isset($filters_data['script_functions']) ? $filters_data['script_functions'] : '';
+
+            return array_merge($header_data, [
                 'cm_id' => $this->cm->id,
-            
-                // Mensajes y estado
-                'success_message' => $success_message,
-                'has_success' => !empty($success_message),
-            
-                // Sección de invitaciones
-                'repository_options' => $this->formatSelectOptions($repository_options),
-            
-                // Datos puros para filtros (SIN HTML)
-                'filters_config' => $filters_data,
-                'table_id' => 'studentsTable',
+                'table_id' => $table_id,
+                'filters_config' => true,
+                'filters' => $filters_list,
+                'filter_script' => $filter_script,
+                'repository_options' => $repository_options,
                 'students' => $students_data,
                 'has_students' => !empty($students_data),
-                'has_updatable_students' => $has_updatable_students,
-            
-                // Estados para template
-                'show_save_button' => $has_updatable_students
-            ];
-        }
+                'show_save_button' => $has_updatable_students,
+                'success_message' => $success_message,
+                'sesskey' => sesskey(), // Agregar sesskey para formularios
+            ]);
+    }
     
-        /**
-         * Obtiene información de debug para mostrar en pantalla
-         */
-        private function getDebugInfo(string $repository_selected): string {
-            global $DB;
-        
-            $debug = [];
-            $debug[] = "📋 <strong>Repositorio seleccionado:</strong> '$repository_selected'";
-        
-            // Verificar repositorios disponibles
-            $repositories_data = \mod_pluginpatroller\model\RepositoryModel::getAllByCourseId($this->course->id);
-            $repositories = array_values($repositories_data); // Solo los nombres
-            $debug[] = "📦 <strong>Repositorios disponibles:</strong> " . count($repositories) . " (" . implode(', ', $repositories) . ")";
-        
-            // DIAGNÓSTICO ESPECÍFICO para test-C-YA-B-1
-            if ($repository_selected === 'test-C-YA-B-1' || in_array('test-C-YA-B-1', $repositories)) {
-                $debug[] = "<br>🔍 <strong>DIAGNÓSTICO ESPECÍFICO PARA test-C-YA-B-1:</strong>";
-            
-                // Buscar por nombre exacto
-                $repo_record = $DB->get_record('repositorios_data_patroller', [
-                    'nombre_repo' => 'test-C-YA-B-1',
-                    'id_materia' => $this->course->id
-                ]);
-            
-                if ($repo_record) {
-                    $debug[] = "✅ Repositorio encontrado en BD: ID={$repo_record->id}";
-                
-                    // Buscar estudiantes asignados
-                    $students = $DB->get_records('usuarios_data_patroller', [
-                        'id_repo' => $repo_record->id,
-                        'id_materia' => $this->course->id
-                    ]);
-                
-                    $debug[] = "👥 Estudiantes asignados: " . count($students);
-                
-                    foreach ($students as $student) {
-                        $user_data = $DB->get_record('user', ['id' => $student->id_usuario]);
-                        $debug[] = "- Estudiante ID: {$student->id}, Usuario: {$user_data->firstname} {$user_data->lastname}, GitHub: '{$student->usuario_github}', Estado: {$student->invitacion_status}";
-                    }
-                } else {
-                    $debug[] = "❌ test-C-YA-B-1 NO encontrado en tabla repositorios_data_patroller";
-                
-                    // Mostrar todos los repositorios en la BD para comparar
-                    $all_repos = $DB->get_records('repositorios_data_patroller', ['id_materia' => $this->course->id]);
-                    $debug[] = "📋 Todos los repositorios en BD:";
-                    foreach ($all_repos as $repo) {
-                        $debug[] = "- ID: {$repo->id}, Nombre: '{$repo->nombre_repo}'";
-                    }
-                }
-            }
-        
-            // Verificar si el repositorio existe
-            if ($repository_selected !== 'All' && !isset($repositories[$repository_selected])) {
-                $debug[] = "❌ <strong>ERROR:</strong> Repositorio '$repository_selected' no encontrado";
-                return implode('<br>', $debug);
-            }
-        
-            // Información general para otros repositorios
-            if ($repository_selected !== 'test-C-YA-B-1') {
-                if ($repository_selected === 'All') {
-                    $repo_names = array_values($repositories);
-                    $debug[] = "🎯 <strong>Procesando:</strong> TODOS los repositorios";
-                } else {
-                    $repo_names = [$repositories[$repository_selected]];
-                    $debug[] = "🎯 <strong>Procesando:</strong> " . $repositories[$repository_selected];
-                }
-            
-                // Verificar estudiantes para cada repositorio
-                foreach ($repo_names as $repo_name) {
-                    $repo_record = $DB->get_record('repositorios_data_patroller', [
-                        'nombre_repo' => $repo_name,
-                        'id_materia' => $this->course->id
-                    ]);
-                
-                    if (!$repo_record) {
-                        $debug[] = "❌ <strong>Repositorio '$repo_name':</strong> No encontrado en BD";
-                        continue;
-                    }
-                
-                    $students = $DB->get_records('usuarios_data_patroller', [
-                        'id_repo' => $repo_record->id,
-                        'id_materia' => $this->course->id
-                    ]);
-                
-                    $debug[] = "👥 <strong>Repositorio '$repo_name':</strong> " . count($students) . " estudiantes asignados";
-                
-                    $with_github = 0;
-                    foreach ($students as $student) {
-                        if (!empty($student->usuario_github)) {
-                            $with_github++;
-                        }
-                    }
-                
-                    $debug[] = "✅ <strong>Con GitHub username:</strong> $with_github de " . count($students);
-                }
-            }
-        
-            return implode('<br>', $debug);
-        }
-    
-        /**
-         * Resetea todos los estados de invitación a "Sin procesar"
-         */
-        private function resetInvitationStatuses(): void {
+    //Resetea todos los estados de invitación a "Sin procesar"
+    private function resetInvitationStatuses(): void {
             global $DB;
         
             try {
@@ -312,219 +300,272 @@ class GestionAccesosController extends AbstractController {
                 error_log("PLUGIN ERROR: Error al resetear estados de invitación: " . $e->getMessage());
                 throw $e;
             }
-        }
+    }
     
-        /**
-         * Test básico de conectividad y configuración de la API de GitHub
-         */
-        private function testGitHubAPI(): string {
-            $results = [];
+    //Obtiene lista de repositorios disponibles con espacio suficiente
+    private function getAvailableRepositoriesWithCapacity(array $raw_repos, int $current_user_id, ?string $current_repo_name = null): array {
+        global $DB;
         
-            try {
-                // Test 1: Verificar configuración
-                $owner = ConfigHelper::getGitHubOwner();
-                $token = ConfigHelper::getGitHubToken();
-            
-                $results[] = "📋 <strong>Configuración:</strong>";
-                $results[] = "- Owner: " . ($owner ? "✅ Configurado ($owner)" : "❌ No configurado");
-                $results[] = "- Token: " . ($token ? "✅ Configurado (" . substr($token, 0, 10) . "...)" : "❌ No configurado");
-            
-                if (!$owner || !$token) {
-                    $results[] = "❌ <strong>Error:</strong> Configuración incompleta";
-                    return implode('<br>', $results);
-                }
-            // Test 2: Verificar conectividad básica
-            $results[] = "<br>🌐 <strong>Test de Conectividad:</strong>";
-            
-            // Test básico de conectividad GitHub
-            try {
-                $githubAPI = new GitHubPatrollerAPI($owner, $token);
-                $test_user = $githubAPI->userExists('github'); // GitHub siempre existe
-                $results[] = "✅ Conectividad GitHub: OK";
-            } catch (\Exception $e) {
-                $results[] = "❌ Error de conectividad: " . $e->getMessage();
+        $max_capacity = $this->pluginpatroller->max_users_per_group;
+        $available_options = [];
+        
+        foreach ($raw_repos as $repo_id => $repo_name) {
+            // Excluir el repositorio actual del estudiante
+            if ($current_repo_name && $repo_name === $current_repo_name) {
+                continue;
             }
             
-            // Test 3: Listar repositorios del curso
-            $results[] = "<br>📁 <strong>Repositorios del curso:</strong>";
-            $repositories = \mod_pluginpatroller\model\RepositoryModel::getAllByCourseId($this->course->id);
+            // Contar estudiantes actuales en este repo (excluyendo al usuario que se est├í cambiando)
+            $current_count = $DB->count_records_sql(
+                "SELECT COUNT(*) 
+                 FROM {usuarios_data_patroller} 
+                 WHERE id_repo = ? 
+                 AND id_materia = ? 
+                 AND id_usuario != ?",
+                [$repo_id, $this->course->id, $current_user_id]
+            );
             
-            if (empty($repositories)) {
-                $results[] = "⚠️ No hay repositorios configurados para este curso";
-            } else {
-                $results[] = "- Total: " . count($repositories) . " repositorios";
-                foreach ($repositories as $id => $name) {
-                    $results[] = "  • $name (ID: $id)";
-                }
+            // Solo agregar si hay espacio disponible
+            if ($current_count < $max_capacity) {
+                $spaces_left = $max_capacity - $current_count;
+                $available_options[] = [
+                    'value' => $repo_name,
+                    'text' => "{$repo_name} ({$spaces_left} lugar" . ($spaces_left != 1 ? 'es' : '') . " disponible" . ($spaces_left != 1 ? 's' : '') . ")",
+                    'selected' => false
+                ];
             }
-            
-            // Test 4: Estudiantes con GitHub username
-            $results[] = "<br>👥 <strong>Estudiantes:</strong>";
-            global $DB;
-            $students = $DB->get_records('usuarios_data_patroller', ['id_materia' => $this->course->id]);
-            $with_github = array_filter($students, fn($s) => !empty($s->usuario_github));
-            
-            $results[] = "- Total estudiantes: " . count($students);
-            $results[] = "- Con GitHub username: " . count($with_github);
-            
-            if (count($with_github) > 0) {
-                $results[] = "- Ejemplos:";
-                $sample = array_slice($with_github, 0, 3);
-                foreach ($sample as $student) {
-                    $status_text = match($student->invitacion_status) {
-                        0 => "Sin procesar",
-                        1 => "Invitación enviada", 
-                        2 => "Error",
-                        3 => "Aceptado",
-                        default => "Estado $student->invitacion_status"
-                    };
-                    $results[] = "  • {$student->usuario_github} - $status_text";
-                }
-            }
-            
-            // Test 5: Verificar invitaciones reales en GitHub
-            $results[] = "<br>🔍 <strong>Verificación de invitaciones en GitHub:</strong>";
-            
-            if (!empty($repositories) && count($with_github) > 0) {
-                // Tomar el primer repositorio y estudiante para verificar
-                $first_repo = array_values($repositories)[0];
-                $first_student = array_values($with_github)[0];
-                
-                $results[] = "- Verificando repo: '$first_repo'";
-                $results[] = "- Usuario: '{$first_student->usuario_github}'";
-                
-                try {
-                    // Crear instancia de API GitHub y listar invitaciones pendientes
-                    $githubAPI = new GitHubPatrollerAPI($owner, $token);
-                    $pending = $githubAPI->listPendingInvitations($first_repo);
-                    $results[] = "- Invitaciones pendientes: " . count($pending);
-                        
-                    if (!empty($pending)) {
-                        foreach ($pending as $inv) {
-                            $invitee = $inv['invitee']['login'] ?? 'unknown';
-                            $results[] = "  • $invitee (ID: {$inv['id']})";
-                        }
-                    }
-                    
-                    // Listar colaboradores actuales
-                    $collaborators = $githubAPI->listCollaborators($first_repo);
-                    $results[] = "- Colaboradores actuales: " . count($collaborators);
-                    
-                    $student_is_collaborator = false;
-                    foreach ($collaborators as $collab) {
-                        if ($collab['login'] === $first_student->usuario_github) {
-                            $student_is_collaborator = true;
-                            $results[] = "  ✅ {$first_student->usuario_github} ya es colaborador";
-                            break;
-                        }
-                    }
-                    
-                    if (!$student_is_collaborator) {
-                        $student_has_invitation = false;
-                        foreach ($pending as $inv) {
-                            if ($inv['invitee']['login'] === $first_student->usuario_github) {
-                                $student_has_invitation = true;
-                                $results[] = "  📩 {$first_student->usuario_github} tiene invitación pendiente (ID: {$inv['id']})";
-                                break;
-                            }
-                        }
-                        
-                        if (!$student_has_invitation) {
-                            $results[] = "  ⚠️ {$first_student->usuario_github} no tiene invitación pendiente ni es colaborador";
-                        }
-                    }
-                    
-                } catch (\Exception $verify_error) {
-                    $results[] = "❌ Error verificando invitaciones: " . $verify_error->getMessage();
-                }
-            } else {
-                $results[] = "⚠️ No hay repositorios o estudiantes para verificar";
-            }
-
-            $results[] = "<br>✅ <strong>Test completado exitosamente</strong>";
-            
-        } catch (\Exception $e) {
-            $results[] = "❌ <strong>Error en test:</strong> " . $e->getMessage();
         }
         
-        return implode('<br>', $results);
+        // Si no hay repos disponibles, agregar mensaje informativo
+        if (empty($available_options)) {
+            $available_options[] = [
+                'value' => '',
+                'text' => 'No hay otros repositorios con espacio disponible',
+                'selected' => false
+            ];
+        }
+        
+        return $available_options;
     }
 
-    /**
-     * Muestra el formulario para cambiar repositorio de un estudiante
-     */
-    private function showChangeRepositoryForm(): string {
-        $student_id = $this->getParam('student_id');
+    //Maneja el cambio de repositorio para un estudiante
+    private function handleRepositoryChange(int $user_id): void {
+        global $DB;
+
+        $new_repo_name = $this->getParam('new_repo_name');
         
-        if (!$student_id) {
-            throw new \Exception('ID de estudiante requerido');
+        if (empty($new_repo_name)) {
+            throw new \Exception('Debe seleccionar un repositorio');
+        }
+        
+        // Validar que el repositorio existe y pertenece al curso
+        $repo = $DB->get_record('repositorios_data_patroller', [
+            'nombre_repo' => $new_repo_name,
+            'id_materia' => $this->course->id
+        ]);
+
+        if (!$repo) {
+            throw new \Exception('Repositorio inv├ílido o no pertenece a este curso');
         }
 
-        // Obtener información del estudiante
-        global $DB;
-        $student = $DB->get_record('usuarios_data_patroller', 
-            ['id_usuario' => $student_id, 'id_materia' => $this->course->id]);
-        
+        // Verificar que el estudiante existe en la tabla
+        $student = $DB->get_record('usuarios_data_patroller', [
+            'id_usuario' => $user_id,
+            'id_materia' => $this->course->id
+        ]);
+
         if (!$student) {
             throw new \Exception('Estudiante no encontrado');
         }
 
-        // Obtener todos los repositorios disponibles
-        $repositories = RepositoryModel::getAllByCourseId($this->course->id);
-        $repository_options = [];
-        foreach ($repositories as $repo_id => $repo_name) {
-            $repository_options[] = [
-                'value' => $repo_id,
-                'name' => $repo_name,
-                'selected' => ($repo_id == $student->id_repo)
-            ];
+        // Verificar capacidad del repositorio (excluyendo al usuario actual)
+        $max_capacity = $this->pluginpatroller->max_users_per_group;
+        $current_count = $DB->count_records_sql(
+            "SELECT COUNT(*) 
+             FROM {usuarios_data_patroller} 
+             WHERE id_repo = ? 
+             AND id_materia = ? 
+             AND id_usuario != ?",
+            [$repo->id, $this->course->id, $user_id]
+        );
+
+        if ($current_count >= $max_capacity) {
+            throw new \Exception("El repositorio '{$new_repo_name}' ya alcanz su capacidad máxima ({$max_capacity} estudiantes)");
         }
 
-        // Obtener información del usuario de Moodle
-        $user = $DB->get_record('user', ['id' => $student_id]);
-        $student_name = $user ? $user->firstname . ' ' . $user->lastname : 'Usuario desconocido';
-
-        $data = [
-            'header_icon' => 'fas fa-exchange-alt',
-            'header_title' => 'Cambiar Repositorio',
-            'header_subtitle' => 'Cambiar asignación de repositorio y rehabilitar invitación',
-            'cm_id' => $this->cm->id,
-            'student_id' => $student_id,
-            'student_name' => $student_name,
-            'current_repo' => $student->repositorio_asignado ?? 'Sin repositorio',
-            'repository_options' => $repository_options,
-            'has_repositories' => !empty($repository_options)
-        ];
-
-        return $this->render('change_repository_form', $data);
+        // Actualizar el repositorio y reiniciar estado de invitación
+        $DB->execute(
+            "UPDATE {usuarios_data_patroller} 
+             SET id_repo = ?, 
+                 invitacion_status = 0
+             WHERE id_usuario = ? 
+             AND id_materia = ?",
+            [$repo->id, $user_id, $this->course->id]
+        );
     }
-
-    /**
-     * Procesa el cambio de repositorio y rehabilita la invitación
-     */
-    private function processRepositoryChange(): void {
-        $student_id = $this->getParam('student_id');
-        $new_repo_id = $this->getParam('new_repository_id');
+    
+    // Maneja peticiones AJAX específicas
+    public function handleAjaxRequest(): void {
+        error_log("DEBUG AJAX: handleAjaxRequest() iniciado");
         
-        if (!$student_id || !$new_repo_id) {
-            throw new \Exception('ID de estudiante y repositorio requeridos');
+        try {
+            $action = $this->getParam('action');
+            error_log("DEBUG AJAX: Action recibida: " . ($action ?: 'EMPTY'));
+            
+            switch ($action) {
+                case 'sync_statuses':
+                    $this->handleSyncStatusesAjax();
+                    break;
+                    
+                case 'send_invitations':
+                    $this->handleSendInvitationsAjax();
+                    break;
+                    
+                case 'cancel_invitation':
+                    $this->handleCancelInvitationAjax();
+                    break;
+                    
+                case 'change_repository':
+                    $this->handleChangeRepositoryAjax();
+                    break;
+                    
+                default:
+                    error_log("DEBUG AJAX: Acción no reconocida: $action");
+                    $this->sendAjaxResponse([
+                        'success' => false,
+                        'message' => 'Acción no válida'
+                    ]);
+            }
+        } catch (\Exception $e) {
+            error_log("DEBUG AJAX: Error en handleAjaxRequest: " . $e->getMessage());
+            $this->sendAjaxResponse([
+                'success' => false,
+                'message' => 'Error interno: ' . $e->getMessage()
+            ]);
         }
-
-        global $DB;
+    }
+    
+    //Maneja sincronizacion de estados via AJAX
+    private function handleSyncStatusesAjax(): void {
+        error_log("DEBUG AJAX: handleSyncStatusesAjax() iniciado");
         
-        // Obtener el nuevo repositorio
-        $new_repo = $DB->get_record('repositorios_data_patroller', ['id' => $new_repo_id]);
-        if (!$new_repo) {
-            throw new \Exception('Repositorio no encontrado');
+        try {
+            // Usar el servicio existente para sincronizar
+            $this->initializeServices();
+            $this->gitHubAccessService->syncInvitationStatuses($this->course->id);
+            
+            error_log("DEBUG AJAX: Enviando respuesta de sincronización exitosa");
+            $this->sendAjaxResponse([
+                'success' => true,
+                'message' => 'Estados sincronizados correctamente',
+                'students' => $this->getUpdatedStudentsData()
+            ]);
+        } catch (\Exception $e) {
+            error_log("DEBUG AJAX: Error en sync: " . $e->getMessage());
+            $this->sendAjaxResponse([
+                'success' => false,
+                'message' => 'Error al sincronizar: ' . $e->getMessage()
+            ]);
         }
-
-        // Actualizar el repositorio del estudiante
-        $DB->execute("UPDATE {usuarios_data_patroller} 
-                     SET id_repo = ?, repositorio_asignado = ?, estado_invitacion = 'pendiente'
-                     WHERE id_usuario = ? AND id_materia = ?", 
-                     [$new_repo_id, $new_repo->repositorio, $student_id, $this->course->id]);
-
-        // Log para seguimiento
-        error_log("CAMBIO REPOSITORIO: Usuario $student_id cambiado a repositorio {$new_repo->repositorio} (ID: $new_repo_id). Estado rehabilitado a 'pendiente'.");
+    }
+    
+    // Maneja envio de invitaciones via AJAX
+    private function handleSendInvitationsAjax(): void {
+        $repository_selected = $this->getParam('repository_selected');
+        $force_resend = $this->getParam('force_resend') ? true : false;
+        
+        if (!$repository_selected) {
+            $this->sendAjaxResponse([
+                'success' => false,
+                'message' => 'Debe seleccionar un repositorio'
+            ]);
+            return;
+        }
+        
+        try {
+            $this->initializeServices();
+            $result = $this->gitHubAccessService->processInvitations($repository_selected, $force_resend);
+            
+            $this->sendAjaxResponse([
+                'success' => true,
+                'message' => $result,
+                'students' => $this->getUpdatedStudentsData()
+            ]);
+        } catch (\Exception $e) {
+            $this->sendAjaxResponse([
+                'success' => false,
+                'message' => 'Error al enviar invitaciones: ' . $e->getMessage()
+            ]);
+        }
+    }
+    
+    //Maneja cancelacion de invitaciones via AJAX
+    private function handleCancelInvitationAjax(): void {
+        // Implementar l├│gica de cancelaci├│n
+        $this->sendAjaxResponse([
+            'success' => true,
+            'message' => 'Invitación cancelada',
+            'students' => $this->getUpdatedStudentsData()
+        ]);
+    }
+    
+    //Maneja cambio de repositorio via AJAX
+    private function handleChangeRepositoryAjax(): void {
+        $user_id = $this->getParam('change_repo_user_id');
+        
+        if (!$user_id) {
+            $this->sendAjaxResponse([
+                'success' => false,
+                'message' => 'ID de usuario requerido'
+            ]);
+            return;
+        }
+        
+        try {
+            $this->handleRepositoryChange((int)$user_id);
+            
+            $this->sendAjaxResponse([
+                'success' => true,
+                'message' => 'Repositorio cambiado correctamente',
+                'students' => $this->getUpdatedStudentsData()
+            ]);
+        } catch (\Exception $e) {
+            $this->sendAjaxResponse([
+                'success' => false,
+                'message' => 'Error al cambiar repositorio: ' . $e->getMessage()
+            ]);
+        }
+    }
+    
+    //Verifica si la peticion actual es AJAX
+    private function isAjaxRequest(): bool {
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        
+        error_log("DEBUG AJAX: isAjaxRequest = " . ($isAjax ? 'true' : 'false'));
+        error_log("DEBUG AJAX: HTTP_X_REQUESTED_WITH = " . ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? 'no definido'));
+        
+        return $isAjax;
+    }
+    
+    // Envia respuesta AJAX en formato JSON
+    private function sendAjaxResponse(array $data): void {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+    
+    //Obtiene datos actualizados de estudiantes para respuesta AJAX
+    private function getUpdatedStudentsData(): array {
+        $students_data = $this->gitHubAccessService->getStudentsWithGitHubData($this->cm->id);
+        
+        // Procesar datos igual que en execute()
+        foreach ($students_data as &$student) {
+            $student['show_change_form'] = false; // Sin formularios en AJAX
+            $student['available_repos'] = []; // Sin opciones extra en AJAX
+        }
+        unset($student);
+        
+        return $students_data;
     }
 }

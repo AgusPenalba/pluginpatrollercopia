@@ -51,7 +51,8 @@
                 <FIELD NAME="lineas_modificadas" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="lineas_modificadas"/>
                 <FIELD NAME="fecha_ultimo_commit" TYPE="char" LENGTH="30" NOTNULL="false" DEFAULT="" SEQUENCE="false" COMMENT="fecha_ultimo_commit"/>
                 <FIELD NAME="calificacion" TYPE="char" LENGTH="10" NOTNULL="false" DEFAULT="" SEQUENCE="false" COMMENT="calificacion del alumno"/>
-                <FIELD NAME="invitacion_status" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Indica el estado de la invitación al usuario"/>       
+                <FIELD NAME="invitacion_status" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Indica el estado de la invitación al usuario"/>
+                <FIELD NAME="invitacion_status_updated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp última actualización del estado de invitación"/>       
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>

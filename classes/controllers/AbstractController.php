@@ -71,6 +71,10 @@ abstract class AbstractController {
     protected function getParam(string $name, $default = null, string $type = PARAM_TEXT) {
         return optional_param($name, $default, $type);
     }
+
+    protected function getParamArray(string $name, array $default = []): array {
+        return optional_param_array($name, $default, PARAM_RAW);
+    }
     
     /* Obtiene parámetros requeridos de la request */
     protected function getRequiredParam(string $name, string $type = PARAM_TEXT) {
@@ -121,6 +125,23 @@ abstract class AbstractController {
             'plugin_url' => $this->getPluginUrl()->out(false),
             'sesskey' => sesskey()
         ];
+    }
+    
+    //Crea una instancia del servicio de datos de templates
+    protected function createTemplateDataService() {
+        return new \mod_pluginpatroller\service\view\TemplateDataService($this->course, $this->cm);
+    }
+    
+    //Prepara configuración de filtros estándar
+    protected function prepareFilters(array $config = []): array {
+        $templateDataService = $this->createTemplateDataService();
+        return $templateDataService->prepareFiltersConfig($config);
+    }
+    
+    //Prepara datos de header de página estándar
+    protected function preparePageHeader(string $icon, string $title, string $subtitle): array {
+        $templateDataService = $this->createTemplateDataService();
+        return $templateDataService->preparePageHeader($icon, $title, $subtitle);
     }
 
     /* Método principal que debe ser implementado por cada controlador */

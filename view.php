@@ -25,7 +25,6 @@ use mod_pluginpatroller\controllers\ContributorsController;
 use mod_pluginpatroller\controllers\StudentViewController;
 use mod_pluginpatroller\controllers\GroupController;
 use mod_pluginpatroller\controllers\TeacherReposController;
-use mod_pluginpatroller\controllers\AIInsightsController;
 use mod_pluginpatroller\helpers\RoleHelper;
 
 global $DB, $OUTPUT, $PAGE, $USER;
@@ -52,37 +51,27 @@ if (!has_capability('mod/pluginpatroller:view', $context)) {
 }
 
 // ===== IMPORTANTE: PROCESAR POST ANTES DEL HEADER =====
-// No poner 'tab1' como valor por defecto aquí: dejamos vacío para que
-// el valor por defecto real se asigne más abajo en función del rol
-// (por ejemplo los alumnos deben llegar a 'tab2' por defecto).
-$tab = optional_param('tab', '', PARAM_TEXT);
+$tab = optional_param('tab', 'tab1', PARAM_TEXT);
 
-// Si es POST, procesarlo ANTES de renderizar el header
+// Si es POST, procesarlo ANTES DE renderizar header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = optional_param('action', '', PARAM_ALPHA);
     
-                // Procesar según la tab activa
-                switch ($tab) {
-                    case 'tab6': // Repositorios Profesor
-                        if (!RoleHelper::isStudent($USER->id, $context)) {
-                            require_once(__DIR__ . '/classes/controllers/TeacherReposController.php');
-                            $controller = new TeacherReposController($context, $course, $cm, $pluginpatroller);
-                            
-                            // Ejecutar solo el procesamiento POST (sin renderizar)
-                            $controller->handlePostRequest();
-                            
-                            // Redirigir después de procesar
-                            $redirect_url = new moodle_url('/mod/pluginpatroller/view.php', [
-                                'id' => $cm->id,
-                                'tab' => $tab
-                            ]);
-                            redirect($redirect_url);
-                            exit;
-                        }
-                        break;        // Agregar otros casos si hay más controladores que procesen POST
-        // case 'tab1':
-        //     ...
-        //     break;
+    // Solo procesar tab6 (TeacherRepos)
+    if ($tab === 'tab6' && !RoleHelper::isStudent($USER->id, $context)) {
+        require_once(__DIR__ . '/classes/controllers/TeacherReposController.php');
+        $controller = new TeacherReposController($context, $course, $cm, $pluginpatroller);
+        
+        // Ejecutar solo el procesamiento POST (sin renderizar)
+        $controller->handlePostRequest();
+        
+        // Redirigir después de procesar
+        $redirect_url = new moodle_url('/mod/pluginpatroller/view.php', [
+            'id' => $cm->id,
+            'tab' => $tab
+        ]);
+        redirect($redirect_url);
+        exit;
     }
 }
 
@@ -108,31 +97,38 @@ $tabDefault = 'tab1';
 
 if ($is_student) {
     if ($data) {
-        $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Participantes');
+        $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), get_string('tabparticipants', 'mod_pluginpatroller'));
         // Mostrar 'Mi Grupo' sólo si el usuario tiene un repositorio asignado para esta materia
         if (!empty($userRepo)) {
-            $tabrows[] = new tabobject('tab5', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab5')), 'Mi Grupo');
+            $tabrows[] = new tabobject('tab5', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab5')), get_string('tabmygroup', 'mod_pluginpatroller'));
            
         }
         $tabDefault = 'tab2';
     }
 } else {
-    $tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Repositorios');
+    $tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), get_string('tabrepositories', 'mod_pluginpatroller'));
     if ($data) {
-        $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Gestión de accesos');
-        $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Seguimiento y calificación');
-        // Nueva pestaña para estadísticas (admin)
-        $tabrows[] = new tabobject('tab_stats', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab_stats')), 'Estadísticas');
-        // Nueva pestaña para IA
-        $tabrows[] = new tabobject('tab_ai', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab_ai')), 'IA Insights');
+        $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), get_string('tabaccessmanagement', 'mod_pluginpatroller'));
+        $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), get_string('tabtrackinggrading', 'mod_pluginpatroller'));
+        $tabrows[] = new tabobject('tab_stats', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab_stats')), get_string('tabstatistics', 'mod_pluginpatroller'));
     }
-    $tabrows[] = new tabobject('tab4', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab4')), 'Sin registrar');
-    $tabrows[] = new tabobject('tab6', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab6')), 'Repositorios Profesor');
+    $tabrows[] = new tabobject('tab4', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab4')), get_string('tabunregistered', 'mod_pluginpatroller'));
+    $tabrows[] = new tabobject('tab6', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab6')), get_string('tabteacherrepos', 'mod_pluginpatroller'));
 }
 
 // Verificar valor del parámetro 'tab'
 if (empty($tab)) {
     $tab = $tabDefault;
+}
+
+// Auto-redirigir estudiantes al primer tab disponible si acceden sin tab específico
+if ($is_student && !isset($_GET['tab']) && $data) {
+    $redirect_url = new moodle_url('/mod/pluginpatroller/view.php', [
+        'id' => $cm->id,
+        'tab' => 'tab2'
+    ]);
+    redirect($redirect_url);
+    exit;
 }
 
 print_tabs(array($tabrows), $tab);
@@ -169,12 +165,6 @@ try {
                 echo $controller->executeStatistics();
             }
             break;
-        case 'tab_ai':
-            if ($data && !$is_student) {
-                $controller = new AIInsightsController($context, $course, $cm, $pluginpatroller);
-                echo $controller->execute();
-            }
-            break;
         case 'tab4':
             if (!$is_student) {
                 // Tab4 muestra estudiantes sin registrar
@@ -191,15 +181,15 @@ try {
         case 'tab6':
             if (!$is_student) {
                 $controller = new TeacherReposController($context, $course, $cm, $pluginpatroller);
-                // Solo renderizar (POST ya fue procesado arriba)
-                echo $controller->executeView();
+                echo $controller->execute();
             }
             break;
         default:
-            echo "<p>Pestaña desconocida.</p>";
+            echo "<p>" . get_string('unknowntab', 'mod_pluginpatroller') . "</p>";
     }
 } catch (Exception $e) {
-    echo $OUTPUT->notification('Ha ocurrido un error: ' . $e->getMessage(), 'error');
+    echo $OUTPUT->notification(get_string('erroroccurred', 'mod_pluginpatroller') . ': ' . $e->getMessage(), 'error');
+    error_log('Error en view.php: ' . $e->getMessage());
 }
 
 echo "<hr>";

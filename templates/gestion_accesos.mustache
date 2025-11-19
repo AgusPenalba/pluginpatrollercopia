@@ -1,9 +1,9 @@
 {{!
-🔑 GESTIÓN DE ACCESOS GITHUB
-Maneja invitaciones de GitHub y gestión de repositorios
+ GITHUB ACCESS MANAGEMENT
+Handles GitHub repository invitations and administration
 }}
 
-<!-- 🎨 ENCABEZADO DE PÁGINA -->
+<!-- PAGE HEADER -->
 <div class="container-fluid mb-4">
     <div class="row">
         <div class="col-12">
@@ -12,17 +12,12 @@ Maneja invitaciones de GitHub y gestión de repositorios
                     <div>
                         <h1 class="h3 mb-0">
                             <i class="fas fa-key"></i>
-                            Gestión de Accesos GitHub
+                            {{#str}}accessmanagement, mod_pluginpatroller{{/str}}
                         </h1>
-                        <p class="mb-0 mt-1 opacity-75">Administra invitaciones y asignaciones de repositorios</p>
+                        <p class="mb-0 mt-1 opacity-75">{{#str}}manageinvitationsrepos, mod_pluginpatroller{{/str}}</p>
                     </div>
                     <div class="text-right">
                         <small class="d-block opacity-75">{{course_name}}</small>
-                        {{#user_fullname}}
-                        <small class="d-block opacity-75">
-                            <i class="fas fa-user"></i> {{user_fullname}}
-                        </small>
-                        {{/user_fullname}}
                     </div>
                 </div>
             </div>
@@ -32,18 +27,18 @@ Maneja invitaciones de GitHub y gestión de repositorios
 
 <div class="container-fluid">
 
-    <!-- 📧 SECCIÓN INVITACIONES -->
+    <!--  INVITATIONS SECTION -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-envelope"></i>
-                        Procesamiento de Invitaciones GitHub
+                        {{#str}}githubprocessing, mod_pluginpatroller{{/str}}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="get" action="">
+                    <form method="get" action="" id="invitations-form">
                         <input type="hidden" name="id" value="{{cm_id}}">
                         <input type="hidden" name="tab" value="tab2">
                         <input type="hidden" name="send_invitations" value="1">
@@ -52,7 +47,7 @@ Maneja invitaciones de GitHub y gestión de repositorios
                             <div class="col-md-4">
                                 <label for="repository_select" class="form-label font-weight-bold">
                                     <i class="fas fa-code-branch"></i>
-                                    Seleccionar Repositorio:
+                                    {{#str}}selectrepository, mod_pluginpatroller{{/str}}
                                 </label>
                                 <select id="repository_select" name="repository_selected" class="form-control">
                                     {{#repository_options}}
@@ -61,16 +56,16 @@ Maneja invitaciones de GitHub y gestión de repositorios
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <button type="submit" class="btn btn-success">
+                                <button type="submit" class="btn btn-success" id="send-invitations-btn">
                                     <i class="fas fa-paper-plane"></i>
-                                    Enviar Invitaciones
+                                    {{#str}}sendinvitations, mod_pluginpatroller{{/str}}
                                 </button>
                             </div>
                         </div>
                     </form>
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Nota:</strong> Solo se enviarán invitaciones a estudiantes con repositorio asignado y usuario GitHub configurado.
+                        <strong>{{#str}}note, mod_pluginpatroller{{/str}}</strong> {{#str}}invitationsnote, mod_pluginpatroller{{/str}}
                     </div>
                 </div>
             </div>
@@ -79,6 +74,26 @@ Maneja invitaciones de GitHub y gestión de repositorios
 
 
 
+    {{! CONFIGURACI├ôN PARA JAVASCRIPT EXTERNO }}
+    <script>
+    // Configuraci├│n global para el m├│dulo de gesti├│n de accesos
+    window.GestionAccesosConfig = {
+        cmId: '{{cm_id}}',
+        sesskey: '{{sesskey}}',
+        baseUrl: window.location.href,
+        tableId: '{{table_id}}',
+        debug: {{#debugging}}true{{/debugging}}{{^debugging}}false{{/debugging}},
+        strings: {
+            syncing: '{{#str}}syncing, mod_pluginpatroller{{/str}}',
+            syncStates: '{{#str}}synchronizestatus, mod_pluginpatroller{{/str}}',
+            success: '{{#str}}syncsuccess, mod_pluginpatroller{{/str}}',
+            errorServer: '{{#str}}errorserver, mod_pluginpatroller{{/str}}',
+            errorSync: '{{#str}}errorsync, mod_pluginpatroller{{/str}}',
+            completed: '{{#str}}synccompleted, mod_pluginpatroller{{/str}}'
+        }
+    };
+    </script>
+
     {{! FILTROS PARA LA TABLA - SISTEMA MODERNO }}
     {{#filters_config}}
     <div class="row mb-3">
@@ -86,7 +101,7 @@ Maneja invitaciones de GitHub y gestión de repositorios
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-filter"></i> Filtros de Búsqueda
+                        <i class="fas fa-filter"></i> Filtros de Busqueda
                     </h5>
                 </div>
                 <div class="card-body">
@@ -112,8 +127,8 @@ Maneja invitaciones de GitHub y gestión de repositorios
                         </div>
                         {{/filters}}
                         <div class="col-md-3 mb-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters('{{table_id}}')">
-                                <i class="fas fa-times"></i> Limpiar Filtros
+                            <button type="button" id="clearFilters" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters()">
+                                <i class="fas fa-times"></i> {{#str}}clearfilters, mod_pluginpatroller{{/str}}
                             </button>
                         </div>
                     </div>
@@ -127,19 +142,27 @@ Maneja invitaciones de GitHub y gestión de repositorios
         </div>
     </div>
     {{/filters_config}}
-    
-    {{! FALLBACK: Sistema de filtros antiguo (temporal) }}
-    {{^filters_config}}
-    {{{filters_html}}}
-    {{/filters_config}}
 
     {{! TABLA DE ESTUDIANTES }}
     <div class="card">
-        <div class="card-header bg-primary text-white">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <i class="fas fa-users"></i>
-                Invitaciones y Registros de GitHub
+                {{#str}}invitationsregisters, mod_pluginpatroller{{/str}}
             </h5>
+            <div class="d-flex align-items-center">
+                <button id="sync-btn" class="btn btn-light btn-sm" 
+                        onclick="syncInvitationStates()"
+                        title="{{#str}}synchronizestatus, mod_pluginpatroller{{/str}} - {{#str}}detectchangesinvitations, mod_pluginpatroller{{/str}}">
+                    <i id="sync-icon" class="fas fa-sync-alt"></i> <span id="sync-text">{{#str}}synchronizestatus, mod_pluginpatroller{{/str}}</span>
+                </button>
+                <div id="sync-progress" class="ml-2" style="display: none;">
+                    <small class="text-info">
+                        <i class="fas fa-spinner fa-spin"></i> 
+                        <span id="sync-status">Iniciando...</span>
+                    </small>
+                </div>
+            </div>
         </div>
         <div class="card-body">
             {{#has_students}}
@@ -152,13 +175,13 @@ Maneja invitaciones de GitHub y gestión de repositorios
                     <table class="table table-striped table-hover" id="{{table_id}}">
                         <thead class="thead-dark">
                             <tr>
-                                <th><i class="fa fa-user"></i> Usuario</th>
-                                <th><i class="fa fa-graduation-cap"></i> Sede</th>
-                                <th><i class="fa fa-book"></i> Curso</th>
+                                <th><i class="fa fa-user"></i> {{#str}}user, mod_pluginpatroller{{/str}}</th>
+                                <th><i class="fa fa-graduation-cap"></i> {{#str}}sede, mod_pluginpatroller{{/str}}</th>
+                                <th><i class="fa fa-book"></i> {{#str}}course, mod_pluginpatroller{{/str}}</th>
                                 <th><i class="fab fa-github"></i> GitHub</th>
-                                <th><i class="fa fa-code-branch"></i> Repositorio</th>
-                                <th><i class="fab fa-github"></i> Estado GitHub</th>
-                                <th><i class="fa fa-cogs"></i> Acciones</th>
+                                <th><i class="fa fa-code-branch"></i> {{#str}}repository, mod_pluginpatroller{{/str}}</th>
+                                <th><i class="fa fa-envelope"></i> {{#str}}invitationstatus, mod_pluginpatroller{{/str}}</th>
+                                <th><i class="fa fa-cogs"></i> {{#str}}actions, mod_pluginpatroller{{/str}}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -178,26 +201,32 @@ Maneja invitaciones de GitHub y gestión de repositorios
                                 <td><span class="badge badge-secondary">{{sede}}</span></td>
                                 <td><span class="badge badge-info">{{curso}}</span></td>
                                 <td>
-                                    <div class="form-group mb-0">
-                                        <input type="text" 
-                                               name="github[{{user_id}}]" 
-                                               value="{{github_username}}" 
-                                               class="form-control form-control-sm"
-                                               placeholder="usuario_github"
-                                               {{#readonly_github}}readonly{{/readonly_github}}>
-                                    </div>
+                                    {{#github_username}}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fab fa-github text-muted mr-1"></i>
+                                            <strong>{{github_username}}</strong>
+                                        </div>
+                                    {{/github_username}}
+                                    {{^github_username}}
+                                        <span class="text-muted">
+                                            <i class="fas fa-minus-circle"></i> {{#str}}unassigned, mod_pluginpatroller{{/str}}
+                                        </span>
+                                    {{/github_username}}
                                 </td>
                                 <td>
-                                    <div class="form-group mb-0">
-                                        <select name="repositorio[{{user_id}}]" class="form-control form-control-sm">
-                                            <option value="">Seleccionar...</option>
-                                            {{#repository_options}}
-                                            <option value="{{value}}" {{#selected}}selected{{/selected}}>{{text}}</option>
-                                            {{/repository_options}}
-                                        </select>
-                                    </div>
+                                    {{#repository_name}}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-code-branch text-muted mr-1"></i>
+                                            <strong>{{repository_name}}</strong>
+                                        </div>
+                                    {{/repository_name}}
+                                    {{^repository_name}}
+                                        <span class="text-muted">
+                                            <i class="fas fa-minus-circle"></i> {{#str}}unassigned, mod_pluginpatroller{{/str}}
+                                        </span>
+                                    {{/repository_name}}
                                 </td>
-                                <td>
+                                <td class="align-top">
                                     {{#github_status_data}}
                                     <span class="badge badge-{{class}}">
                                         <i class="{{icon}}"></i> {{text}}
@@ -205,235 +234,126 @@ Maneja invitaciones de GitHub y gestión de repositorios
                                     {{/github_status_data}}
                                     {{^github_status_data}}
                                     <span class="badge badge-secondary">
-                                        <i class="fas fa-question"></i> Sin verificar
+                                        <i class="fas fa-question"></i> {{#str}}unverified, mod_pluginpatroller{{/str}}
                                     </span>
                                     {{/github_status_data}}
                                 </td>
-                                <td>
-                                    {{#has_pending_invitation}}
-                                    <form method="post" action="" style="display: inline;">
-                                        <input type="hidden" name="cancel_invitation" value="{{user_id}}">
-                                        <input type="hidden" name="id" value="{{cm_id}}">
-                                        <input type="hidden" name="tab" value="tab2">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                onclick="return confirm('¿Está seguro de cancelar la invitación para {{full_name}}?');"
-                                                title="Cancelar invitación pendiente">
-                                            <i class="fas fa-times"></i> Cancelar
-                                        </button>
-                                    </form>
-                                    {{/has_pending_invitation}}
-                                    {{^has_pending_invitation}}
-                                    {{#is_collaborator}}
-                                    <span class="badge badge-success">
-                                        <i class="fas fa-check"></i> Colaborador Activo
-                                    </span>
-                                    {{/is_collaborator}}
-                                    {{^is_collaborator}}
-                                    {{#can_invite}}
-                                    <form method="post" action="" style="display: inline;">
-                                        <input type="hidden" name="send_single_invitation" value="{{user_id}}">
-                                        <input type="hidden" name="id" value="{{cm_id}}">
-                                        <input type="hidden" name="tab" value="tab2">
-                                        <button type="submit" class="btn btn-sm btn-primary" 
-                                                onclick="return confirm('¿Enviar invitación de colaboración a {{full_name}}?');"
-                                                title="Enviar invitación de colaboración">
-                                            <i class="fas fa-paper-plane"></i> Enviar Invitación
-                                        </button>
-                                    </form>
-                                    {{/can_invite}}
-                                    {{^can_invite}}
-                                    <span class="badge badge-warning">
-                                        <i class="fa fa-exclamation"></i> Pendiente
-                                    </span>
-                                    {{/can_invite}}
-                                    {{/is_collaborator}}
-                                    {{/has_pending_invitation}}
+                                <td class="align-top">
+                                    <div class="d-flex flex-column" style="gap: 3px;">
+                                        <!-- Bot├│n cambiar repo (siempre visible si tiene repo asignado) -->
+                                        {{#repository_name}}
+                                        <a href="?id={{cm_id}}&tab=tab2&change_repo_for={{user_id}}" 
+                                           class="badge badge-secondary text-decoration-none" 
+                                           style="cursor: pointer; width: fit-content;"
+                                           title="{{#str}}changerepository, mod_pluginpatroller{{/str}}">
+                                            <i class="fas fa-exchange-alt"></i> {{#str}}change, mod_pluginpatroller{{/str}}
+                                        </a>
+                                        {{/repository_name}}
+                                        
+                                        <!-- Botones de invitaci├│n (solo si NO es colaborador activo) -->
+                                        {{^is_collaborator}}
+                                            {{#has_pending_invitation}}
+                                            <form method="post" action="" class="m-0" style="width: fit-content;">
+                                                <input type="hidden" name="cancel_invitation" value="{{user_id}}">
+                                                <input type="hidden" name="id" value="{{cm_id}}">
+                                                <input type="hidden" name="tab" value="tab2">
+                                                <button type="submit" class="badge badge-danger border-0" 
+                                                        style="cursor: pointer; width: fit-content;"
+                                                        onclick="return confirm('{{#str}}confirmcancelinvitation, mod_pluginpatroller, {{full_name}}{{/str}}');"
+                                                        title="{{#str}}cancelinvitationpending, mod_pluginpatroller{{/str}}">
+                                                    <i class="fas fa-times"></i> {{#str}}cancel, mod_pluginpatroller{{/str}}
+                                                </button>
+                                            </form>
+                                            {{/has_pending_invitation}}
+                                            
+                                            {{^has_pending_invitation}}
+                                                {{#can_invite}}
+                                                <form method="post" action="" class="m-0" style="width: fit-content;">
+                                                    <input type="hidden" name="send_single_invitation" value="{{user_id}}">
+                                                    <input type="hidden" name="id" value="{{cm_id}}">
+                                                    <input type="hidden" name="tab" value="tab2">
+                                                    <button type="submit" class="badge badge-primary border-0" 
+                                                            style="cursor: pointer; width: fit-content;"
+                                                            onclick="return confirm('{{#str}}confirmsendinvitation, mod_pluginpatroller, {{full_name}}{{/str}}');"
+                                                            title="{{#str}}sendinvitationcollaboration, mod_pluginpatroller{{/str}}">
+                                                        <i class="fas fa-paper-plane"></i> {{#str}}send, mod_pluginpatroller{{/str}}
+                                                    </button>
+                                                </form>
+                                                {{/can_invite}}
+                                                
+                                                {{^can_invite}}
+                                                <span class="badge badge-warning">
+                                                    <i class="fa fa-exclamation"></i> {{#str}}incomplete, mod_pluginpatroller{{/str}}
+                                                </span>
+                                                {{/can_invite}}
+                                            {{/has_pending_invitation}}
+                                        {{/is_collaborator}}
+                                    </div>
                                 </td>
                             </tr>
+                            
+                            <!-- Fila expandida para cambiar repositorio -->
+                            {{#show_change_form}}
+                            <tr class="bg-light">
+                                <td colspan="7">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-exchange-alt"></i> {{#str}}changerepositoryfor, mod_pluginpatroller{{/str}} {{full_name}}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <form method="post" action="">
+                                                <input type="hidden" name="id" value="{{cm_id}}">
+                                                <input type="hidden" name="tab" value="tab2">
+                                                <input type="hidden" name="change_repo_user_id" value="{{user_id}}">
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <p><strong>{{#str}}student, mod_pluginpatroller{{/str}}:</strong> {{full_name}}</p>
+                                                        <p><strong>{{#str}}githubuser, mod_pluginpatroller{{/str}}:</strong> {{github_username}}</p>
+                                                        <p><strong>{{#str}}currentrepository, mod_pluginpatroller{{/str}}:</strong> <span class="badge badge-info">{{repository_name}}</span></p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="new_repo_name"><strong>{{#str}}newrepository, mod_pluginpatroller{{/str}}:</strong></label>
+                                                            <select name="new_repo_name" id="new_repo_name" class="form-control" required>
+                                                                <option value="">-- {{#str}}selectrepository, mod_pluginpatroller{{/str}} --</option>
+                                                                {{#available_repos}}
+                                                                <option value="{{value}}">{{text}}</option>
+                                                                {{/available_repos}}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="text-right">
+                                                    <a href="?id={{cm_id}}&tab=tab2" class="btn btn-secondary">
+                                                        <i class="fas fa-times"></i> {{#str}}cancel, mod_pluginpatroller{{/str}}
+                                                    </a>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-check"></i> {{#str}}confirmchange, mod_pluginpatroller{{/str}}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/show_change_form}}
                             {{/students}}
                         </tbody>
                     </table>
                 </div>
-                
-                {{#show_save_button}}
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fa fa-save"></i> Guardar Cambios
-                    </button>
-                </div>
-                {{/show_save_button}}
             </form>
             {{/has_students}}
             
             {{^has_students}}
             <div class="alert alert-info">
                 <i class="fa fa-info-circle"></i>
-                <strong>Sin estudiantes:</strong> No hay estudiantes registrados en este curso.
+                <strong>{{#str}}nostudents, mod_pluginpatroller{{/str}}</strong> {{#str}}nostudentsregistered, mod_pluginpatroller{{/str}}
             </div>
             {{/has_students}}
         </div>
     </div>
 </div>
-
-{{! FORMULARIO PARA CAMBIO DE REPOSITORIO }}
-{{#show_change_repo_form}}
-<div class="card mt-4">
-    <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0">
-            <i class="fas fa-exchange-alt"></i> Cambiar Repositorio - {{change_repo_student_name}}
-        </h5>
-    </div>
-    <div class="card-body">
-        <form method="post" action="">
-            <input type="hidden" name="action" value="change_repository">
-            <input type="hidden" name="student_id" value="{{change_repo_student_id}}">
-            <input type="hidden" name="id" value="{{cm_id}}">
-            <input type="hidden" name="tab" value="tab2">
-            
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="form-group">
-                        <label for="new_repository_id">Nuevo Repositorio:</label>
-                        <select id="new_repository_id" name="new_repository_id" class="form-control" required>
-                            <option value="">Seleccionar repositorio...</option>
-                            {{#all_repository_options}}
-                            <option value="{{value}}">{{text}}</option>
-                            {{/all_repository_options}}
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <div class="btn-group" role="group">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-exchange-alt"></i> Cambiar Repositorio
-                        </button>
-                        <a href="?id={{cm_id}}&tab=tab2" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancelar
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="alert alert-warning mt-3">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>Atención:</strong> Este cambio resetará el estado de la invitación y el estudiante tendrá que aceptar la nueva invitación.
-            </div>
-        </form>
-    </div>
-</div>
-{{/show_change_repo_form}}
-
-{{! SCRIPT DE FILTROS }}
-<script>
-// ==================== FUNCIONES DE FILTRADO ====================
-function filterTable(tableId) {
-    const table = document.getElementById(tableId || '{{table_id}}');
-    if (!table) return;
-    
-    const rows = table.getElementsByTagName('tr');
-    let visibleCount = 0;
-    
-    // Obtener valores de filtros
-    const nameFilter = document.getElementById('filterName')?.value.toLowerCase() || '';
-    const sedeFilter = document.getElementById('filterSede')?.value || '';
-    const cursoFilter = document.getElementById('filterCurso')?.value || '';
-    
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        
-        // Obtener datos de la fila
-        const sede = row.getAttribute('data-sede') || '';
-        const curso = row.getAttribute('data-curso') || '';
-        
-        // Obtener texto del nombre y apellido (primera columna)
-        const nameCell = row.getElementsByTagName('td')[0];
-        const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
-        
-        // Aplicar filtros
-        const nameMatch = !nameFilter || nameText.includes(nameFilter);
-        const sedeMatch = !sedeFilter || sedeFilter === 'all' || sede === sedeFilter;
-        const cursoMatch = !cursoFilter || cursoFilter === 'all' || curso === cursoFilter;
-        
-        // Mostrar/ocultar fila
-        if (nameMatch && sedeMatch && cursoMatch) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    }
-    
-    // Actualizar contador
-    updateFilterCounter(tableId, visibleCount);
-}
-
-function clearAllFilters(tableId) {
-    // Limpiar campos de filtro
-    const nameFilter = document.getElementById('filterName');
-    const sedeFilter = document.getElementById('filterSede');
-    const cursoFilter = document.getElementById('filterCurso');
-    
-    if (nameFilter) nameFilter.value = '';
-    if (sedeFilter) sedeFilter.value = 'all';
-    if (cursoFilter) cursoFilter.value = 'all';
-    
-    // Aplicar filtros (mostrar todo)
-    filterTable(tableId);
-}
-
-function updateFilterCounter(tableId, visibleCount) {
-    const counter = document.getElementById('filterCounter');
-    if (counter) {
-        const table = document.getElementById(tableId || '{{table_id}}');
-        const totalRows = table ? table.getElementsByTagName('tr').length - 1 : 0; // -1 para excluir header
-        
-        if (visibleCount === totalRows) {
-            counter.textContent = `Mostrando todos los ${totalRows} estudiantes`;
-        } else {
-            counter.textContent = `Mostrando ${visibleCount} de ${totalRows} estudiantes`;
-        }
-    }
-}
-
-// ==================== INICIALIZACIÓN ====================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Sistema de filtros para gestión de accesos cargado correctamente');
-    
-    // Configurar búsqueda en tiempo real para el campo nombre
-    const nameFilter = document.getElementById('filterName');
-    if (nameFilter) {
-        nameFilter.addEventListener('input', function() {
-            filterTable('{{table_id}}');
-        });
-        console.log('Filtro de nombre configurado para búsqueda en tiempo real');
-    }
-    
-    // Configurar filtros de select
-    const sedeFilter = document.getElementById('filterSede');
-    const cursoFilter = document.getElementById('filterCurso');
-    
-    if (sedeFilter) {
-        sedeFilter.addEventListener('change', function() {
-            filterTable('{{table_id}}');
-        });
-    }
-    
-    if (cursoFilter) {
-        cursoFilter.addEventListener('change', function() {
-            filterTable('{{table_id}}');
-        });
-    }
-    
-    // Inicializar contador de filtros
-    updateFilterCounter('{{table_id}}', document.querySelectorAll('#{{table_id}} tbody tr').length);
-});
-
-// ==================== FUNCIONES DE INVITACIONES ====================
-function confirmSendInvitation(studentId, studentName) {
-    return confirm(`¿Estás seguro de enviar una invitación a ${studentName}?`);
-}
-
-function confirmCancelInvitation(studentId, studentName) {
-    return confirm(`¿Estás seguro de cancelar la invitación de ${studentName}?`);
-}
-</script>

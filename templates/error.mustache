@@ -1,6 +1,6 @@
 {{!
-🚨 TEMPLATE DE ERROR UNIFICADO
-Manejo consistente de errores en todo el plugin
+🚨 ERROR TEMPLATE - UNIFIED
+Consistent error handling throughout the plugin
 }}
 
 <div class="container-fluid">
@@ -12,7 +12,7 @@ Manejo consistente de errores en todo el plugin
                         <i class="fas fa-exclamation-triangle fa-2x mr-3"></i>
                         <div>
                             <h4 class="mb-0">{{error_title}}</h4>
-                            <small class="opacity-75">Ha ocurrido un problema</small>
+                            <small class="opacity-75">{{#str}}problemoccurred, mod_pluginpatroller{{/str}}</small>
                         </div>
                     </div>
                 </div>
@@ -21,7 +21,7 @@ Manejo consistente de errores en todo el plugin
                         <div class="d-flex">
                             <i class="fas fa-bug fa-lg mr-3 mt-1"></i>
                             <div>
-                                <h6 class="font-weight-bold">Detalles del error:</h6>
+                                <h6 class="font-weight-bold">{{#str}}errordetails, mod_pluginpatroller{{/str}}</h6>
                                 <p class="mb-0">{{error_message}}</p>
                             </div>
                         </div>
@@ -31,19 +31,19 @@ Manejo consistente de errores en todo el plugin
                     
                     <div class="row">
                         <div class="col-md-6">
-                            <h6><i class="fas fa-question-circle"></i> ¿Qué puedes hacer?</h6>
+                            <h6><i class="fas fa-question-circle"></i> {{#str}}whatcanyoudo, mod_pluginpatroller{{/str}}</h6>
                             <ul class="small">
-                                <li>Refresca la página y vuelve a intentar</li>
-                                <li>Verifica que tienes los permisos necesarios</li>
-                                <li>Contacta al administrador si persiste</li>
+                                <li>{{#str}}refreshpage, mod_pluginpatroller{{/str}}</li>
+                                <li>{{#str}}checkpermissions, mod_pluginpatroller{{/str}}</li>
+                                <li>{{#str}}contactadmin, mod_pluginpatroller{{/str}}</li>
                             </ul>
                         </div>
                         <div class="col-md-6">
-                            <h6><i class="fas fa-info-circle"></i> Información técnica:</h6>
+                            <h6><i class="fas fa-info-circle"></i> {{#str}}technicalinfo, mod_pluginpatroller{{/str}}</h6>
                             <p class="small text-muted">
-                                <strong>Curso:</strong> {{course_name}}<br>
-                                <strong>Usuario:</strong> {{user_fullname}}<br>
-                                <strong>Timestamp:</strong> <span id="errorTime"></span>
+                                <strong>{{#str}}course, mod_pluginpatroller{{/str}}</strong> {{course_name}}<br>
+                                <strong>{{#str}}user, mod_pluginpatroller{{/str}}</strong> {{user_fullname}}<br>
+                                <strong>{{#str}}timestamp, mod_pluginpatroller{{/str}}</strong> <span id="errorTime"></span>
                             </p>
                         </div>
                     </div>
@@ -52,11 +52,11 @@ Manejo consistente de errores en todo el plugin
                     <div class="text-center">
                         <button onclick="history.back()" class="btn btn-secondary mr-2">
                             <i class="fas fa-arrow-left"></i>
-                            Volver
+                            {{#str}}goback, mod_pluginpatroller{{/str}}
                         </button>
                         <button onclick="location.reload()" class="btn btn-primary">
                             <i class="fas fa-sync-alt"></i>
-                            Recargar Página
+                            {{#str}}reloadpage, mod_pluginpatroller{{/str}}
                         </button>
                     </div>
                 </div>

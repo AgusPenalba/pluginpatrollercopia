@@ -70,14 +70,14 @@ abstract class GitHubRegistrationStatus
         }
         
         return match($status) {
-            self::UNPROCESSED => 'Sin procesar',
-            self::MISSING_USERNAME => 'Sin usuario',
-            self::USERNAME_NOT_FOUND => 'Usuario no encontrado',
-            self::INVITATION_SENT => 'Invitación enviada',
-            self::INVITATION_PENDING => 'Pendiente',
-            self::ACCEPTED => 'Aceptado',
-            self::ERROR => 'Error',
-            default => 'Desconocido'
+            self::UNPROCESSED => get_string('status_unprocessed', 'mod_pluginpatroller'),
+            self::MISSING_USERNAME => get_string('status_missing_username', 'mod_pluginpatroller'),
+            self::USERNAME_NOT_FOUND => get_string('status_username_not_found', 'mod_pluginpatroller'),
+            self::INVITATION_SENT => get_string('status_sent', 'mod_pluginpatroller'),
+            self::INVITATION_PENDING => get_string('status_pending', 'mod_pluginpatroller'),
+            self::ACCEPTED => get_string('status_accepted', 'mod_pluginpatroller'),
+            self::ERROR => get_string('status_error', 'mod_pluginpatroller'),
+            default => get_string('status_unknown', 'mod_pluginpatroller')
         };
     }
 
