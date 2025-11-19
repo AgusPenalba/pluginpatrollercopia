@@ -214,4 +214,52 @@ class TeacherRepoModel {
             return false;
         }
     }
+    
+    /**
+     * Guarda o actualiza el username de GitHub del profesor
+     * Si no tiene asignaciones, crea un registro dummy con repo_id = 0
+     * Si tiene asignaciones, actualiza el username en todas
+     * 
+     * @param int $userid ID del usuario/profesor
+     * @param string $github_username Username de GitHub
+     * @return bool True si se guardó correctamente
+     */
+    public static function saveTeacherGithubUsername(int $userid, string $github_username): bool {
+        global $DB;
+        
+        try {
+            if (!$DB->get_manager()->table_exists('repos_profesores')) {
+                return false;
+            }
+            
+            // Buscar asignaciones existentes del profesor
+            $existing = $DB->get_records('repos_profesores', ['userid' => $userid]);
+            
+            if (empty($existing)) {
+                // No tiene asignaciones, crear registro dummy
+                $record = new \stdClass();
+                $record->repo_id = 0;
+                $record->userid = $userid;
+                $record->github_username = $github_username;
+                $record->invitation_status = 0;
+                $record->timecreated = time();
+                $record->timemodified = time();
+                
+                $DB->insert_record('repos_profesores', $record);
+            } else {
+                // Actualizar username en todas las asignaciones
+                foreach ($existing as $assignment) {
+                    $assignment->github_username = $github_username;
+                    $assignment->timemodified = time();
+                    $DB->update_record('repos_profesores', $assignment);
+                }
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            debugging('Error en saveTeacherGithubUsername: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return false;
+        }
+    }
 }

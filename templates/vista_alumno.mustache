@@ -12,9 +12,9 @@ Ver compañeros de curso y gestionar repositorio asignado
                     <div>
                         <h1 class="h3 mb-0">
                             <i class="fas fa-users"></i>
-                            Compañeros de Curso
+                            {{#str}}classmates, mod_pluginpatroller{{/str}}
                         </h1>
-                        <p class="mb-0 mt-1 opacity-75">Ver y gestionar información de tu grupo académico</p>
+                        <p class="mb-0 mt-1 opacity-75">{{#str}}academicgroupinfo, mod_pluginpatroller{{/str}}</p>
                     </div>
                     <div class="text-right">
                         <small class="d-block opacity-75">{{course_name}}</small>
@@ -35,8 +35,8 @@ Ver compañeros de curso y gestionar repositorio asignado
     {{#success_message}}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle"></i>
-        <strong>¡Éxito!</strong> {{success_message}}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+        <strong>{{#str}}success, mod_pluginpatroller{{/str}}</strong> {{success_message}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="{{#str}}close, mod_pluginpatroller{{/str}}">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
@@ -45,8 +45,8 @@ Ver compañeros de curso y gestionar repositorio asignado
     {{#error_message}}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
-        <strong>Error:</strong> {{error_message}}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+        <strong>{{#str}}error, mod_pluginpatroller{{/str}}</strong> {{error_message}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="{{#str}}close, mod_pluginpatroller{{/str}}">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
@@ -56,7 +56,7 @@ Ver compañeros de curso y gestionar repositorio asignado
         <div class="col-12">
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i>
-                <strong>Tu contexto académico:</strong> {{my_sede_curso}}
+                <strong>{{#str}}youracademiccontext, mod_pluginpatroller{{/str}}</strong> {{my_sede_curso}}
             </div>
         </div>
     </div>
@@ -68,7 +68,7 @@ Ver compañeros de curso y gestionar repositorio asignado
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-filter"></i> Filtros de Búsqueda
+                        <i class="fas fa-filter"></i> {{#str}}searchfilters, mod_pluginpatroller{{/str}}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -93,7 +93,7 @@ Ver compañeros de curso y gestionar repositorio asignado
                         {{/filters}}
                         <div class="col-md-4 mb-2 d-flex align-items-end">
                             <button type="button" class="btn btn-outline-secondary" onclick="clearAllFilters('classmatesTable')">
-                                <i class="fas fa-times"></i> Limpiar Filtros
+                                <i class="fas fa-times"></i> {{#str}}clearfilters, mod_pluginpatroller{{/str}}
                             </button>
                         </div>
                     </div>
@@ -116,7 +116,7 @@ Ver compañeros de curso y gestionar repositorio asignado
                     <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0">
                             <i class="fas fa-table"></i> 
-                            Lista de compañeros
+                            {{#str}}classmateslist, mod_pluginpatroller{{/str}}
                         </h5>
                     </div>
                     <div class="card-body p-0">
@@ -126,36 +126,36 @@ Ver compañeros de curso y gestionar repositorio asignado
                                     <tr>
                                         <th scope="col">
                                             <i class="fas fa-map-marker-alt"></i>
-                                            Sede y Curso
+                                            {{#str}}campusandcourse, mod_pluginpatroller{{/str}}
                                         </th>
                                         <th scope="col">
                                             <i class="fas fa-user"></i>
-                                            Nombre Completo
+                                            {{#str}}fullname, mod_pluginpatroller{{/str}}
                                         </th>
                                         <th scope="col">
                                             <i class="fab fa-github"></i>
-                                            Usuario GitHub
+                                            {{#str}}githubuser, mod_pluginpatroller{{/str}}
                                         </th>
                                         <th scope="col">
                                             <i class="fas fa-code-branch"></i>
-                                            Repositorio/Grupo
+                                            {{#str}}repositorygroup, mod_pluginpatroller{{/str}}
                                         </th>
                                         <th scope="col">
                                             <i class="fas fa-tools"></i>
-                                            Acciones
+                                            {{#str}}actions, mod_pluginpatroller{{/str}}
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {{#classmates}}
-                                    <tr {{#is_current_user}}class="table-warning"{{/is_current_user}}>
+                                    <tr {{#is_current_user}}class="table-warning"{{/is_current_user}} data-fullname="{{full_name}}">
                                         <td>{{my_sede_curso}}</td>
                                         <td>
                                             {{#is_current_user}}
-                                                <strong>{{name}} (Tú)</strong>
+                                                <strong>{{full_name}} {{#str}}you, mod_pluginpatroller{{/str}}</strong>
                                             {{/is_current_user}}
                                             {{^is_current_user}}
-                                                {{name}}
+                                                {{full_name}}
                                             {{/is_current_user}}
                                         </td>
                                         <td>
@@ -164,7 +164,7 @@ Ver compañeros de curso y gestionar repositorio asignado
                                                        name="github_username" 
                                                        value="{{github_username}}" 
                                                        class="form-control form-control-sm"
-                                                       placeholder="Tu usuario GitHub"
+                                                       placeholder="{{#str}}yourgithubusername, mod_pluginpatroller{{/str}}"
                                                        required>
                                             {{/can_edit}}
                                             {{^can_edit}}
@@ -172,7 +172,7 @@ Ver compañeros de curso y gestionar repositorio asignado
                                                 {{#is_readonly}}
                                                     <small class="text-muted d-block">
                                                         <i class="fas fa-lock"></i> 
-                                                        Estado bloqueado
+                                                        {{#str}}lockedstate, mod_pluginpatroller{{/str}}
                                                     </small>
                                                 {{/is_readonly}}
                                             {{/can_edit}}
@@ -189,7 +189,7 @@ Ver compañeros de curso y gestionar repositorio asignado
                                                 </select>
                                                 {{/has_available_repos}}
                                                 {{^has_available_repos}}
-                                                    <span class="badge badge-warning">Sin repositorios disponibles</span>
+                                                    <span class="badge badge-warning">{{#str}}noreposavailable, mod_pluginpatroller{{/str}}</span>
                                                 {{/has_available_repos}}
                                             {{/can_edit}}
                                             {{^can_edit}}
@@ -201,7 +201,7 @@ Ver compañeros de curso y gestionar repositorio asignado
                                                 <input type="hidden" name="alumno_id" value="{{id}}">
                                                 <button type="submit" name="guardar_repositorio" value="1" class="btn btn-success btn-sm">
                                                     <i class="fas fa-save"></i>
-                                                    Guardar
+                                                    {{#str}}save, mod_pluginpatroller{{/str}}
                                                 </button>
                                             {{/can_edit}}
                                             {{^can_edit}}
@@ -212,6 +212,8 @@ Ver compañeros de curso y gestionar repositorio asignado
                                     {{/classmates}}
                                 </tbody>
                             </table>
+                           
+
                         </div>
                     </div>
                 </div>
@@ -227,10 +229,9 @@ Ver compañeros de curso y gestionar repositorio asignado
         <div class="col-12">
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i>
-                <strong>No hay compañeros registrados</strong>
+                <strong>{{#str}}noclassmatesregistered, mod_pluginpatroller{{/str}}</strong>
                 <p class="mb-0 mt-2">
-                    No se encontraron otros estudiantes registrados en tu sede y curso. 
-                    Puede que aún no se hayan registrado en el sistema o que seas el único estudiante inscrito.
+                    {{#str}}noclassmatesexplanation, mod_pluginpatroller{{/str}}
                 </p>
             </div>
         </div>
@@ -241,4 +242,46 @@ Ver compañeros de curso y gestionar repositorio asignado
 <!-- Scripts de filtros -->
 <script type="text/javascript">
 {{{filters_script}}}
+</script>
+<!-- Inline filter script for classmates table (search by full name) -->
+<script>
+function filterTable(tableId) {
+    const table = document.getElementById(tableId || 'classmatesTable');
+    if (!table) return;
+
+    const nameFilter = document.getElementById('filterName')?.value.toLowerCase().trim() || '';
+
+    const rows = table.querySelectorAll('tbody tr');
+    let visible = 0;
+    rows.forEach(row => {
+        const fullname = (row.getAttribute('data-fullname') || '').toLowerCase().trim();
+        const match = !nameFilter || fullname.includes(nameFilter);
+        if (match) {
+            row.style.display = '';
+            visible++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    // update counter
+    const counter = document.getElementById('filterCounter');
+    if (counter) {
+        const total = rows.length;
+        if (visible === total) counter.textContent = `Mostrando todos los ${total} compañeros`;
+        else counter.textContent = `Mostrando ${visible} de ${total} compañeros`;
+    }
+}
+
+function clearAllFilters(tableId) {
+    const nameEl = document.getElementById('filterName');
+    if (nameEl) nameEl.value = '';
+    filterTable(tableId || 'classmatesTable');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const nameEl = document.getElementById('filterName');
+    if (nameEl) nameEl.addEventListener('input', function() { filterTable('classmatesTable'); });
+    // init counter
+    filterTable('classmatesTable');
+});
 </script>

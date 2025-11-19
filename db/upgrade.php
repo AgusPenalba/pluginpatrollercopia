@@ -64,5 +64,23 @@ function xmldb_pluginpatroller_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025101002, 'pluginpatroller');
     }
 
+    // Actualización a la versión 2025111301 - Añadir campo invitacion_status_updated a usuarios_data_patroller
+    if ($oldversion < 2025111301) {
+        
+        // Definir tabla usuarios_data_patroller
+        $table = new xmldb_table('usuarios_data_patroller');
+        
+        // Definir campo invitacion_status_updated
+        $field = new xmldb_field('invitacion_status_updated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'invitacion_status');
+        
+        // Agregar campo solo si no existe
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        
+        // Registro del punto de actualización completado
+        upgrade_mod_savepoint(true, 2025111301, 'pluginpatroller');
+    }
+
     return true;
 }

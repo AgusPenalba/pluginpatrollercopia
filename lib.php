@@ -2,7 +2,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 use mod_pluginpatroller\model\PluginInstanceModel;
-use mod_pluginpatroller\service\GradebookService;
+use mod_pluginpatroller\service\core\GradebookService;
 
 /**
  * Crea una nueva instancia del plugin.

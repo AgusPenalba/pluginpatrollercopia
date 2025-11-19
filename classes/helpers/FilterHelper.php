@@ -99,7 +99,7 @@ class FilterHelper {
         $options = [];
         
         if ($include_all) {
-            $options[''] = 'Todos';
+            $options[''] = get_string('all', 'mod_pluginpatroller');
         }
         
         $values = array_unique(array_map(function($item) use ($field) {
@@ -138,9 +138,9 @@ class FilterHelper {
         if ($config['show_name']) {
             $filters[] = [
                 'id' => 'filterName',
-                'label' => 'Buscar por Nombre',
+                'label' => get_string('searchbyname', 'mod_pluginpatroller'),
                 'type' => 'text',
-                'placeholder' => 'Escriba para buscar...',
+                'placeholder' => get_string('searchplaceholder', 'mod_pluginpatroller'),
                 'is_text' => true
             ];
         }
@@ -149,7 +149,7 @@ class FilterHelper {
         if ($config['show_sede']) {
             $filters[] = [
                 'id' => 'filterSede',
-                'label' => 'Filtrar por Sede',
+                'label' => get_string('filterbysede', 'mod_pluginpatroller'),
                 'options' => self::formatOptionsForTemplate(self::getSedeOptions()),
                 'type' => 'select',
                 'is_select' => true
@@ -160,7 +160,7 @@ class FilterHelper {
         if ($config['show_curso']) {
             $filters[] = [
                 'id' => 'filterCurso',
-                'label' => 'Filtrar por Curso',
+                'label' => get_string('filterbycourse', 'mod_pluginpatroller'),
                 'options' => self::formatOptionsForTemplate(self::getCursoOptions($courseId)),
                 'type' => 'select',
                 'is_select' => true
@@ -178,7 +178,7 @@ class FilterHelper {
                 
             $filters[] = [
                 'id' => 'filterRepo',
-                'label' => 'Filtrar por Repositorio',
+                'label' => get_string('filterbyrepository', 'mod_pluginpatroller'),
                 'options' => $formattedOptions,
                 'type' => 'select',
                 'is_select' => true
@@ -319,6 +319,9 @@ class FilterHelper {
      * Genera script JavaScript avanzado para filtrar tablas
      */
     private static function generateAdvancedFilterScript(string $tableId, array $filterTypes): string {
+        // Obtener cadena de traducción para JavaScript
+        $showing_text = get_string('showingxofy', 'mod_pluginpatroller', (object)['visible' => '${visibleCount}', 'total' => '${totalRows}']);
+        
         return '
         <script>
         function filterTable(tableId = "' . $tableId . '") {
@@ -377,7 +380,7 @@ class FilterHelper {
             
             const counter = document.getElementById("filterCounter");
             if (counter) {
-                counter.textContent = `Mostrando ${visibleCount} de ${rows.length - 1} registros`;
+                counter.textContent = `' . $showing_text . '`;
             }
         }
         
@@ -395,7 +398,11 @@ class FilterHelper {
      * Para uso en templates que generan su propio HTML
      */
     public static function getFilterScriptFunctions(): string {
-        return '
+        // Obtener cadena de traducción para JavaScript
+        $showing_text = get_string('showingxofy', 'mod_pluginpatroller', (object)['visible' => '${visibleCount}', 'total' => '${totalRows}']);
+        
+        return 'console.log("🔍 Cargando sistema de filtros...");
+
 function filterTable(tableId) {
     const table = document.getElementById(tableId);
     if (!table) {
@@ -405,7 +412,6 @@ function filterTable(tableId) {
     const nameFilter = document.getElementById("filterName");
     const sedeFilter = document.getElementById("filterSede");
     const cursoFilter = document.getElementById("filterCurso");
-    const repoFilter = document.getElementById("filterRepo");
     const repoFilter = document.getElementById("filterRepo");
     
     console.log("Elementos de filtro encontrados:", {
@@ -432,7 +438,101 @@ function filterTable(tableId) {
         let showRow = true;
         
         // Lógica diferente según la tabla
-        if (tableId === "dataTable") {
+        if (tableId.startsWith("created_repos_table_")) {
+            // Tabla de repositorios creados en Main Panel
+            // Usar atributos data-* para filtrado
+            
+            // Filtro por nombre del repositorio (columna 3)
+            if (filters.name && cells[3]) {
+                const repoNameText = (cells[3].textContent || cells[3].innerText).toLowerCase();
+                if (!repoNameText.includes(filters.name)) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por sede usando atributo data-sede
+            if (filters.sede && filters.sede !== "") {
+                const sedeData = row.getAttribute("data-sede") || "";
+                if (sedeData !== filters.sede) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por curso usando atributo data-curso
+            if (filters.curso && filters.curso !== "") {
+                const cursoData = row.getAttribute("data-curso") || "";
+                if (cursoData !== filters.curso) {
+                    showRow = false;
+                }
+            }
+            
+        } else if (tableId.startsWith("access_table_")) {
+            // Tabla de gestión de accesos
+            // Estructura: [Usuario, Sede, Curso, GitHub, Repositorio, Estado Invitación, Acciones]
+            // Usar atributos data-* para filtrado
+            
+            // Filtro por nombre - busca en columna 0 (Usuario con nombre completo)
+            if (filters.name && cells[0]) {
+                const userText = (cells[0].textContent || cells[0].innerText).toLowerCase();
+                if (!userText.includes(filters.name)) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por sede usando atributo data-sede
+            if (filters.sede && filters.sede !== "") {
+                const sedeData = row.getAttribute("data-sede") || "";
+                if (sedeData !== filters.sede) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por curso usando atributo data-curso
+            if (filters.curso && filters.curso !== "") {
+                const cursoData = row.getAttribute("data-curso") || "";
+                if (cursoData !== filters.curso) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por repositorio usando atributo data-repo
+            if (filters.repo && filters.repo !== "" && filters.repo !== "All") {
+                const repoData = row.getAttribute("data-repo") || "";
+                if (repoData !== filters.repo) {
+                    showRow = false;
+                }
+            }
+            
+        } else if (tableId.startsWith("unassigned_repos_table_")) {
+            // Tabla de repositorios no asignados (TeacherReposController)
+            // Estructura: [Checkbox, Nombre Repo, Sede, Curso, Grupo]
+            // Usar atributos data-* para filtrado
+            
+            // Filtro por nombre del repositorio - busca en columna 1 (Nombre Repo)
+            if (filters.name && cells[1]) {
+                const repoNameText = (cells[1].textContent || cells[1].innerText).toLowerCase();
+                if (!repoNameText.includes(filters.name)) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por sede usando atributo data-sede
+            if (filters.sede && filters.sede !== "") {
+                const sedeData = row.getAttribute("data-sede") || "";
+                if (sedeData !== filters.sede) {
+                    showRow = false;
+                }
+            }
+            
+            // Filtro por curso usando atributo data-curso
+            if (filters.curso && filters.curso !== "") {
+                const cursoData = row.getAttribute("data-curso") || "";
+                if (cursoData !== filters.curso) {
+                    showRow = false;
+                }
+            }
+            
+        } else if (tableId === "dataTable") {
             // Tabla de contributors: [Repositorio, Usuario GitHub, Nombre Completo, Último Commit, Commits, Líneas +, Líneas -, Modificadas, Calificación]
             
             // Filtro por nombre - busca en las columnas 1 (Usuario GitHub) y 2 (Nombre Completo)
@@ -557,7 +657,7 @@ function updateFilterCount(tableId, count = null) {
     const counter = document.getElementById("filterCounter");
     if (counter) {
         const totalRows = table.getElementsByTagName("tr").length - 1;
-        counter.textContent = `Mostrando ${visibleCount} de ${totalRows} registros`;
+        counter.textContent = `' . $showing_text . '`;
     }
 }
 
@@ -651,7 +751,7 @@ document.addEventListener("DOMContentLoaded", function() {
      */
     public static function getSedeOptions(): array {
         return [
-            '' => 'Todas las Sedes',
+            '' => get_string('allsedes', 'mod_pluginpatroller'),
             'YA' => 'YA',
             'BE' => 'BE'
         ];
@@ -662,7 +762,7 @@ document.addEventListener("DOMContentLoaded", function() {
      */
     public static function getCursoOptions(int $courseId): array {
         $cursos = UserModel::get_all_cursos_by_course_id($courseId);
-        $options = ['' => 'Todos los Cursos'];
+        $options = ['' => get_string('allcourses', 'mod_pluginpatroller')];
         foreach ($cursos as $curso => $label) {
             $options[$curso] = $label;
         }
@@ -682,7 +782,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         $options = [];
         if ($includeAll) {
-            $options[''] = 'Todos los Repositorios';
+            $options['All'] = get_string('allrepositories', 'mod_pluginpatroller');
         }
         
         foreach ($repositories as $repo) {
@@ -705,7 +805,7 @@ document.addEventListener("DOMContentLoaded", function() {
             ORDER BY sede ASC, curso ASC
         ", [$courseId]);
         
-        $options = ['' => 'Todos los Grupos'];
+        $options = ['' => get_string('allgroups', 'mod_pluginpatroller')];
         foreach ($groups as $group) {
             $options[$group->group_key] = $group->group_key;
         }
@@ -720,7 +820,7 @@ document.addEventListener("DOMContentLoaded", function() {
      */
     private static function formatCustomRepositoryOptions(array $customRepositories): array {
         // Siempre incluir la opción "Todos"
-        $options = ['All' => 'Todos los Repositorios'];
+        $options = ['All' => get_string('allrepositories', 'mod_pluginpatroller')];
         
         // Agregar cada repositorio (tanto sin asignar como específicos)
         foreach ($customRepositories as $repo_name) {

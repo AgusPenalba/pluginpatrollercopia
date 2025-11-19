@@ -12,7 +12,7 @@ Información detallada del grupo del estudiante
                     <div>
                         <h1 class="h3 mb-0">
                             <i class="{{header_icon}}"></i>
-                            Grupo {{repository_info.number}}
+                            {{#str}}group, mod_pluginpatroller{{/str}} {{repository_info.number}}
                         </h1>
                         <p class="mb-0 mt-1 opacity-75">{{header_subtitle}}</p>
                     </div>
@@ -35,8 +35,8 @@ Información detallada del grupo del estudiante
     {{#success_message}}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle"></i>
-        <strong>¡Éxito!</strong> {{success_message}}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+        <strong>{{#str}}success, mod_pluginpatroller{{/str}}</strong> {{success_message}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="{{#str}}close, mod_pluginpatroller{{/str}}">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
@@ -45,8 +45,8 @@ Información detallada del grupo del estudiante
     {{#error_message}}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
-        <strong>Error:</strong> {{error_message}}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+        <strong>{{#str}}error, mod_pluginpatroller{{/str}}</strong> {{error_message}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="{{#str}}close, mod_pluginpatroller{{/str}}">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
@@ -59,21 +59,21 @@ Información detallada del grupo del estudiante
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-info-circle"></i>
-                        Información del Grupo
+                        {{#str}}groupinformation, mod_pluginpatroller{{/str}}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-12 col-md-4">
-                            <h6><i class="fas fa-map-marker-alt"></i> Sede y Curso</h6>
+                            <h6><i class="fas fa-map-marker-alt"></i> {{#str}}campusandcourse, mod_pluginpatroller{{/str}}</h6>
                             <p class="text-muted mb-0">{{group_info.display_name}}</p>
                         </div>
                         <div class="col-12 col-md-4">
-                            <h6><i class="fas fa-users"></i> Total de Miembros</h6>
-                            <p class="text-muted mb-0">{{group_stats.total_students}} estudiantes</p>
+                            <h6><i class="fas fa-users"></i> {{#str}}totalmembers, mod_pluginpatroller{{/str}}</h6>
+                            <p class="text-muted mb-0">{{group_stats.total_students}} {{#str}}students, mod_pluginpatroller{{/str}}</p>
                         </div>
                         <div class="col-12 col-md-4">
-                            <h6><i class="fas fa-tag"></i> Repositorio</h6>
+                            <h6><i class="fas fa-tag"></i> {{#str}}repository, mod_pluginpatroller{{/str}}</h6>
                             <p class="text-muted mb-0">
                                 {{#repository_url}}
                                     <a href="{{repository_url}}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
@@ -102,7 +102,7 @@ Información detallada del grupo del estudiante
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
                             <i class="fas fa-chart-line"></i>
-                            Seguimiento y Calificación
+                            {{#str}}trackingandgrading, mod_pluginpatroller{{/str}}
                         </h5>
                     </div>
                     <div class="card-body p-0">
@@ -110,15 +110,15 @@ Información detallada del grupo del estudiante
                             <table class="table table-striped table-hover mb-0" id="dataTable">
                                 <thead class="thead-dark">
                                     <tr>
-                                        <th>Nombre </th> 
-                                        <th><i class="fab fa-github"></i> Usuario GitHub</th>
+                                        <th>{{#str}}name, mod_pluginpatroller{{/str}}</th> 
+                                        <th><i class="fab fa-github"></i> {{#str}}githubuser, mod_pluginpatroller{{/str}}</th>
                                        
-                                        <th>Último Commit</th>
-                                        <th>Commits</th>
-                                        <th>Líneas +</th>
-                                        <th>Líneas -</th>
-                                        <th>Modificadas</th>
-                                        <th>Calificación</th>
+                                        <th>{{#str}}lastcommit, mod_pluginpatroller{{/str}}</th>
+                                        <th>{{#str}}commits, mod_pluginpatroller{{/str}}</th>
+                                        <th>{{#str}}linesadded, mod_pluginpatroller{{/str}}</th>
+                                        <th>{{#str}}linesdeleted, mod_pluginpatroller{{/str}}</th>
+                                        <th>{{#str}}linesmodified, mod_pluginpatroller{{/str}}</th>
+                                        <th>{{#str}}grade, mod_pluginpatroller{{/str}}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -128,7 +128,7 @@ Información detallada del grupo del estudiante
                                         
                                         <td>
                                             {{#is_current_user}}
-                                                <strong>{{full_name}} (Tú)</strong>
+                                                <strong>{{full_name}} {{#str}}you, mod_pluginpatroller{{/str}}</strong>
                                             {{/is_current_user}}
                                             {{^is_current_user}}
                                                 {{full_name}}
@@ -143,7 +143,7 @@ Información detallada del grupo del estudiante
                                         <td>
                                             <span id="grade-display-{{student_id}}">
                                                 {{#grade_empty}}
-                                                    <span class="text-muted">Sin nota</span>
+                                                    <span class="text-muted">{{#str}}nograde, mod_pluginpatroller{{/str}}</span>
                                                 {{/grade_empty}}
                                                 {{^grade_empty}}
                                                     <span>{{grade}}</span>
@@ -172,12 +172,12 @@ Información detallada del grupo del estudiante
         <div class="col-12">
             <div class="card h-100 d-flex flex-column">
                 <div class="card-header d-flex justify-content-between align-items-center bg-secondary text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Estadísticas</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> {{#str}}statistics, mod_pluginpatroller{{/str}}</h5>
                     <div>
-                        <label for="metricSelectorFooter" class="sr-only">Métrica</label>
+                        <label for="metricSelectorFooter" class="sr-only">{{#str}}metric, mod_pluginpatroller{{/str}}</label>
                         <select id="metricSelectorFooter" class="form-control form-control-sm" onchange="(function(v){window.switchBarMetric(v); var s=document.getElementById('metricSelector'); if(s) s.value=v; })(this.value);">
-                            <option value="commits" selected>Commits</option>
-                            <option value="lines">Líneas agregadas</option>
+                            <option value="commits" selected>{{#str}}commits, mod_pluginpatroller{{/str}}</option>
+                            <option value="lines">{{#str}}linesadded, mod_pluginpatroller{{/str}}</option>
                         </select>
                     </div>
                 </div>
@@ -311,10 +311,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [
-                            { label: 'Líneas agregadas', data: lines_added, backgroundColor: 'rgba(40, 167, 69, 0.7)' },
-                            { label: 'Líneas eliminadas', data: lines_deleted, backgroundColor: 'rgba(220, 53, 69, 0.7)' },
-                            { label: 'Líneas modificadas', data: lines_modified, backgroundColor: 'rgba(255, 193, 7, 0.7)' }
+                            datasets: [
+                            { label: '{{label_lines_added}}', data: lines_added, backgroundColor: 'rgba(40, 167, 69, 0.7)' },
+                            { label: '{{label_lines_deleted}}', data: lines_deleted, backgroundColor: 'rgba(220, 53, 69, 0.7)' },
+                            { label: '{{label_lines_modified}}', data: lines_modified, backgroundColor: 'rgba(255, 193, 7, 0.7)' }
                         ]
                     },
                     options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
@@ -333,22 +333,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     // pieChartInstance exists; update dataset
                     if (metric === 'lines') {
                         window.pieChartInstance.data.datasets[0].data = lines_added;
-                        window.pieChartInstance.data.datasets[0].label = 'Líneas agregadas';
+                        window.pieChartInstance.data.datasets[0].label = '{{label_lines_added}}';
                         // ensure palette matches number of labels
                         try {
                             window.pieChartInstance.data.datasets[0].backgroundColor = generatePalette(labels.length);
                         } catch (palErr) { /* ignore palette errors */ }
-                        if (window.pieChartInstance.options && window.pieChartInstance.options.plugins && window.pieChartInstance.options.plugins.title) {
-                            window.pieChartInstance.options.plugins.title.text = 'Líneas agregadas';
+                            if (window.pieChartInstance.options && window.pieChartInstance.options.plugins && window.pieChartInstance.options.plugins.title) {
+                            window.pieChartInstance.options.plugins.title.text = '{{label_lines_added}}';
                         }
                     } else {
                         window.pieChartInstance.data.datasets[0].data = commits;
-                        window.pieChartInstance.data.datasets[0].label = 'Commits';
+                        window.pieChartInstance.data.datasets[0].label = '{{label_commits}}';
                         try {
                             window.pieChartInstance.data.datasets[0].backgroundColor = generatePalette(labels.length);
                         } catch (palErr) { /* ignore palette generation error */ }
                         if (window.pieChartInstance.options && window.pieChartInstance.options.plugins && window.pieChartInstance.options.plugins.title) {
-                            window.pieChartInstance.options.plugins.title.text = 'Commits';
+                            window.pieChartInstance.options.plugins.title.text = '{{label_commits}}';
                         }
                     }
                     // updated pie dataset

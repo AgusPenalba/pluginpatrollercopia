@@ -47,6 +47,30 @@ class ConfigHelper {
     }
     
     /**
+     * Construye la URL completa del repositorio en GitHub
+     * @param string $repo_name Nombre del repositorio (puede incluir owner/repo o solo repo)
+     * @return string URL completa del repositorio o cadena vacía si no se puede construir
+     */
+    public static function buildRepositoryUrl(string $repo_name): string {
+        if (empty($repo_name)) {
+            return '';
+        }
+
+        // Si el repo_name ya incluye el formato "owner/repo"
+        if (strpos($repo_name, '/') !== false) {
+            return 'https://github.com/' . rawurlencode($repo_name);
+        }
+
+        // Si solo es el nombre del repo, usar el owner configurado
+        $owner = self::getGitHubOwner();
+        if (!empty($owner)) {
+            return 'https://github.com/' . rawurlencode($owner) . '/' . rawurlencode($repo_name);
+        }
+
+        return '';
+    }
+    
+    /**
      * Obtiene el máximo de usuarios por grupo sugerido
      * @return int
      */

@@ -1,6 +1,6 @@
 {{!
-🔍 FILTROS AVANZADOS REUTILIZABLES
-Template para generar filtros consistentes usando FilterHelper
+🔍 REUSABLE ADVANCED FILTERS
+Template for generating consistent filters using FilterHelper
 }}
 
 <div class="row mb-3">
@@ -9,7 +9,7 @@ Template para generar filtros consistentes usando FilterHelper
             <div class="card-header bg-secondary text-white">
                 <h6 class="mb-0">
                     <i class="fas fa-filter"></i>
-                    Filtros
+                    {{#str}}filters, mod_pluginpatroller{{/str}}
                 </h6>
             </div>
             <div class="card-body py-2">
@@ -33,7 +33,7 @@ Template para generar filtros consistentes usando FilterHelper
                         <div class="col-md-3">
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters('{{table_id}}')">
                                 <i class="fas fa-times"></i>
-                                Limpiar
+                                {{#str}}clear, mod_pluginpatroller{{/str}}
                             </button>
                         </div>
                     </div>

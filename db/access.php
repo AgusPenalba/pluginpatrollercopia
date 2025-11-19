@@ -23,4 +23,16 @@ $capabilities = [
             'manager' => 1         // CAP_ALLOW
         ],
     ],
+    
+    // Capacidad para gestionar datos del módulo (actualizar commits, calificar, etc.)
+    'mod/pluginpatroller:manage' => [
+        'captype' => 'write',
+        'contextlevel' => 70,                  // CONTEXT_MODULE
+        'archetypes' => [
+            'teacher' => 1,        // CAP_ALLOW
+            'editingteacher' => 1, // CAP_ALLOW
+            'manager' => 1         // CAP_ALLOW
+        ],
+        'clonepermissionsfrom' => 'moodle/grade:edit'
+    ],
 ];
